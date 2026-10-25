@@ -184,3 +184,59 @@ describe('AnalysisService', () => {
     expect(result.warnings).toContainEqual({ code: 'FEW_RECENT_MATCHES', teamId: HOME_ID })
   })
 })
+
+describe('AnalysisService.teamForm', () => {
+  const AS_OF = '2026-10-25T12:00:00Z'
+
+  it('should_return_the_five_latest_played_matches_before_the_given_time', async () => {
+    const season = [
+      ...Array.from({ length: 7 }, (_, index) => match(index + 1, `2026-09-${String(index + 1).padStart(2, '0')}`)),
+      match(8, '2026-10-30', { status: 'NS' }),
+    ]
+    const service = new AnalysisService(buildFootballStub({ getSeasonFixtures: calendars({ [HOME_ID]: { [CURRENT_SEASON]: season } }) }))
+
+    const form = await service.teamForm(HOME_ID, AS_OF)
+
+    expect(form.teamId).toBe(HOME_ID)
+    expect(form.matches.map((item) => item.fixtureId)).toEqual([7, 6, 5, 4, 3])
+  })
+
+  it('should_average_the_statistics_of_those_matches_when_their_details_are_available', async () => {
+    const recent = [match(1, '2026-09-01'), match(2, '2026-09-08')]
+    const details = new Map([[1, withCorners(recent[0], 8, 2)], [2, withCorners(recent[1], 4, 2)]])
+    const service = new AnalysisService(
+      buildFootballStub({
+        getSeasonFixtures: calendars({ [HOME_ID]: { [CURRENT_SEASON]: recent } }),
+        getFixtureDetails: async (_league, fixtureId) => details.get(fixtureId),
+      }),
+    )
+
+    const form = await service.teamForm(HOME_ID, AS_OF)
+
+    expect(form.aggregate.metrics.cornersFor).toEqual({ total: 12, average: 6, n: 2 })
+  })
+
+  it('should_complete_the_form_with_the_previous_season_when_the_current_one_is_young', async () => {
+    const service = new AnalysisService(
+      buildFootballStub({
+        getSeasonFixtures: calendars({
+          [HOME_ID]: {
+            [CURRENT_SEASON]: [match(1, '2026-09-01')],
+            [CURRENT_SEASON - 1]: [match(2, '2025-05-01'), match(3, '2025-05-08'), match(4, '2025-05-15'), match(5, '2025-05-22')],
+          },
+        }),
+      }),
+    )
+
+    const form = await service.teamForm(HOME_ID, AS_OF)
+
+    expect(form.matches.map((item) => item.fixtureId)).toEqual([1, 5, 4, 3, 2])
+  })
+
+  it('should_return_an_empty_form_when_the_team_has_not_played_yet', async () => {
+    const form = await new AnalysisService(buildFootballStub()).teamForm(HOME_ID, AS_OF)
+
+    expect(form.matches).toEqual([])
+    expect(form.aggregate.form).toEqual([])
+  })
+})

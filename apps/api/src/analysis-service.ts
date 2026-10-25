@@ -47,8 +47,21 @@ function facing(fixtures: Fixture[], opponentId: number): Fixture[] {
   return fixtures.filter((fixture) => fixture.teams.home.id === opponentId || fixture.teams.away.id === opponentId)
 }
 
+/** Swaps calendar entries for their detailed version (with statistics) when there is one, most recent first. */
+function withDetail(fixtures: Fixture[], detailed: Map<number, Fixture>): Fixture[] {
+  return fixtures.map((item) => detailed.get(item.fixture.id) ?? item).sort(byMostRecentFirst)
+}
+
 export class AnalysisService {
   constructor(private readonly football: FootballData) {}
+
+  /** A team's last played matches before `asOf`, independent of any particular upcoming match. */
+  async teamForm(teamId: number, asOf: string): Promise<TeamAnalysis> {
+    const current = await this.football.getSeasonFixtures(teamId)
+    const history = await this.loadHistory(teamId, current, RECENT_FORM_SEASONS_BACK)
+    const recent = selectRecentBefore(history, asOf)
+    return toTeamAnalysis(teamId, withDetail(recent, await this.loadDetails(recent)))
+  }
 
   async analyze(request: AnalysisRequest): Promise<AnalysisResponse> {
     const { homeTeamId, awayTeamId, kickoff } = request
@@ -68,12 +81,10 @@ export class AnalysisService {
       headToHead: selectRecentBefore(facing(homeHistory, awayTeamId), kickoff),
     }
     const detailed = await this.loadDetails(Object.values(recent).flat())
-    const withDetail = (fixtures: Fixture[]) =>
-      fixtures.map((item) => detailed.get(item.fixture.id) ?? item).sort(byMostRecentFirst)
 
-    const home = toTeamAnalysis(homeTeamId, withDetail(recent.home))
-    const away = toTeamAnalysis(awayTeamId, withDetail(recent.away))
-    const headToHead = toTeamAnalysis(homeTeamId, withDetail(recent.headToHead))
+    const home = toTeamAnalysis(homeTeamId, withDetail(recent.home, detailed))
+    const away = toTeamAnalysis(awayTeamId, withDetail(recent.away, detailed))
+    const headToHead = toTeamAnalysis(homeTeamId, withDetail(recent.headToHead, detailed))
     const prediction = predictFromAggregates(home.aggregate, away.aggregate, headToHead.aggregate)
 
     return { home, away, headToHead, prediction, warnings: this.collectWarnings(home, away, headToHead, prediction !== null) }

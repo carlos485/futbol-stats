@@ -1,18 +1,20 @@
-import type { AnalysisResponse, Fixture, TeamFixturesResponse } from '@futbol/core'
+import type { AnalysisResponse, Fixture, TeamAnalysis, TeamFixturesResponse } from '@futbol/core'
 import { describe, expect, it, vi } from 'vitest'
 import { createApp } from './app.ts'
 import { EspnError, NotFoundError } from './errors.ts'
 import { buildFixture, buildFootballStub, CURRENT_SEASON } from './testing/builders.ts'
 
 const KICKOFF = '2026-03-01T20:00:00+00:00'
+const NOW = new Date('2026-10-25T12:00:00.000Z')
 const ANALYSIS_URL = `/api/analysis?home=10&away=20&kickoff=${encodeURIComponent(KICKOFF)}`
 
 function createTestApp(options: { analyze?: () => Promise<AnalysisResponse>; fixtures?: Fixture[] } = {}) {
   const analyze = vi.fn(options.analyze ?? (async () => ({}) as AnalysisResponse))
+  const teamForm = vi.fn(async () => ({}) as TeamAnalysis)
   const getSeasonFixtures = vi.fn(async () => ({ season: CURRENT_SEASON, fixtures: options.fixtures ?? [] }))
   const football = buildFootballStub({ searchTeams: vi.fn(async () => []), getSeasonFixtures })
-  const app = createApp({ football, analysis: { analyze } })
-  return { app, analyze, football, getSeasonFixtures }
+  const app = createApp({ football, analysis: { analyze, teamForm }, now: () => NOW })
+  return { app, analyze, teamForm, football, getSeasonFixtures }
 }
 
 describe('team search route', () => {
@@ -61,6 +63,26 @@ describe('team fixtures route', () => {
     const response = await app.request('/api/teams/abc/fixtures')
 
     expect(response.status).toBe(400)
+  })
+})
+
+describe('team form route', () => {
+  it('should_ask_for_the_form_as_of_the_current_time_when_the_team_id_is_valid', async () => {
+    const { app, teamForm } = createTestApp()
+
+    const response = await app.request('/api/teams/83/form')
+
+    expect(response.status).toBe(200)
+    expect(teamForm).toHaveBeenCalledExactlyOnceWith(83, '2026-10-25T12:00:00.000Z')
+  })
+
+  it('should_answer_400_when_the_team_id_is_not_a_positive_integer', async () => {
+    const { app, teamForm } = createTestApp()
+
+    const response = await app.request('/api/teams/abc/form')
+
+    expect(response.status).toBe(400)
+    expect(teamForm).not.toHaveBeenCalled()
   })
 })
 

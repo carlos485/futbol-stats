@@ -20,7 +20,8 @@ const analysisQuerySchema = z.object({
 
 export interface AppDependencies {
   football: FootballData
-  analysis: Pick<AnalysisService, 'analyze'>
+  analysis: Pick<AnalysisService, 'analyze' | 'teamForm'>
+  now?: () => Date
 }
 
 function parseOrThrow<Schema extends z.ZodType>(schema: Schema, input: unknown): z.output<Schema> {
@@ -31,7 +32,7 @@ function parseOrThrow<Schema extends z.ZodType>(schema: Schema, input: unknown):
   return parsed.data
 }
 
-export function createApp({ football, analysis }: AppDependencies): Hono {
+export function createApp({ football, analysis, now = () => new Date() }: AppDependencies): Hono {
   const app = new Hono()
 
   app.onError((error, context) => {
@@ -56,6 +57,11 @@ export function createApp({ football, analysis }: AppDependencies): Hono {
       played: selectPlayed(fixtures),
     }
     return context.json(body)
+  })
+
+  app.get('/api/teams/:id/form', async (context) => {
+    const teamId = parseOrThrow(idSchema, context.req.param('id'))
+    return context.json(await analysis.teamForm(teamId, now().toISOString()))
   })
 
   app.get('/api/analysis', async (context) => {
