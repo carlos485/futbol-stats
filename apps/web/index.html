@@ -5,6 +5,20 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Futbol Stats</title>
+    <script>
+      // Applies the saved theme before the first paint so there is no flash of the wrong one; with no
+      // saved choice the system preference decides. Keep in sync with src/lib/theme.ts (key and rule).
+      ;(function () {
+        try {
+          var stored = localStorage.getItem('futbol-stats-theme')
+          var dark = stored === 'dark' || (stored !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          document.documentElement.classList.toggle('dark', dark)
+          document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
+        } catch (error) {
+          // Storage or matchMedia unavailable: the app applies the theme itself once it loads.
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

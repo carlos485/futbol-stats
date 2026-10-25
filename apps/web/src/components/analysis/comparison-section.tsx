@@ -7,6 +7,14 @@ import { COMPARISON_METRICS } from '@/lib/metrics'
 
 const CHART_HEIGHT_PX = 300
 const CHART_DECIMALS = 2
+// Recharts draws with inline styles, so the theme colors are passed as CSS variables to follow light and dark.
+const AXIS_TICK = { fontSize: 12, fill: 'var(--muted-foreground)' }
+const TOOLTIP_STYLE = {
+  backgroundColor: 'var(--popover)',
+  color: 'var(--popover-foreground)',
+  border: '1px solid var(--border)',
+  borderRadius: 'var(--radius)',
+}
 
 interface ComparisonSectionProps {
   home: AnalysisResponse['home']
@@ -61,11 +69,15 @@ export function ComparisonSection({ home, away, homeName, awayName }: Comparison
         <div style={{ height: CHART_HEIGHT_PX }} aria-label="Gráfico comparativo de promedios" role="img">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="metric" tick={{ fontSize: 12 }} interval={0} />
-              <YAxis allowDecimals />
-              <Tooltip formatter={(value) => Number(value).toFixed(CHART_DECIMALS)} />
-              <Legend />
+              <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="metric" tick={AXIS_TICK} interval={0} stroke="var(--border)" />
+              <YAxis allowDecimals tick={AXIS_TICK} stroke="var(--border)" />
+              <Tooltip
+                formatter={(value) => Number(value).toFixed(CHART_DECIMALS)}
+                contentStyle={TOOLTIP_STYLE}
+                cursor={{ fill: 'var(--muted)', opacity: 0.5 }}
+              />
+              <Legend formatter={(name) => <span className="text-foreground">{name}</span>} />
               <Bar dataKey={homeName} fill="var(--chart-1)" radius={[4, 4, 0, 0]} />
               <Bar dataKey={awayName} fill="var(--chart-2)" radius={[4, 4, 0, 0]} />
             </BarChart>
