@@ -39,7 +39,7 @@ export function TeamSearch({ selected, onSelect }: TeamSearchProps) {
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), 'w-full justify-between sm:w-80')}>
+      <PopoverTrigger className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), 'w-full justify-between')}>
         <span className={cn('flex items-center gap-2', !selected && 'text-muted-foreground')}>
           {selected ? <img src={selected.team.logo} alt="" className="size-5 object-contain" /> : null}
           {selected ? selected.team.name : 'Buscar equipo…'}

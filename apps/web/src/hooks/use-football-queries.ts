@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchAnalysis, fetchTeamFixtures, fetchTeams, type AnalysisParams } from '@/lib/api'
+import { fetchAnalysis, fetchTeamFixtures, fetchTeamForm, fetchTeams, type AnalysisParams } from '@/lib/api'
 
 export const MIN_SEARCH_LENGTH = 3
 
@@ -16,6 +16,13 @@ export function useTeamFixtures(teamId: number) {
   return useQuery({
     queryKey: ['team-fixtures', teamId],
     queryFn: ({ signal }) => fetchTeamFixtures(teamId, signal),
+  })
+}
+
+export function useTeamForm(teamId: number) {
+  return useQuery({
+    queryKey: ['team-form', teamId],
+    queryFn: ({ signal }) => fetchTeamForm(teamId, signal),
   })
 }
 
