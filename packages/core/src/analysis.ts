@@ -52,3 +52,19 @@ export interface TeamFixturesResponse {
   /** Matches already played this season, most recent first. */
   played: Fixture[]
 }
+
+export interface MatchdayCompetition {
+  /** ESPN slug of the competition (e.g. `esp.1`). */
+  id: string
+  name: string
+  /** The competition's matches of the day, earliest first. */
+  fixtures: Fixture[]
+}
+
+export interface MatchdayResponse {
+  /** The day shown, as `YYYY-MM-DD` in Lima time. */
+  date: string
+  competitions: MatchdayCompetition[]
+  /** Names of the competitions that could not be loaded; the rest of the list is still valid. */
+  unavailable: string[]
+}
