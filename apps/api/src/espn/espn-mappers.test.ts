@@ -1,8 +1,8 @@
 import { StatisticType } from '@futbol/core'
 import { describe, expect, it } from 'vitest'
-import { espnScheduleEvent, espnSummary } from '../testing/builders.ts'
-import { isFriendlyLeague, scheduleEventToFixture, searchItemToTeam, summaryToFixture, toStatusCode } from './espn-mappers.ts'
-import { scheduleEventSchema, searchSchema, summarySchema } from './espn-schemas.ts'
+import { espnScheduleEvent, espnScoreboard, espnScoreboardEvent, espnSummary } from '../testing/builders.ts'
+import { isFriendlyLeague, scheduleEventToFixture, scoreboardToFixtures, searchItemToTeam, summaryToFixture, toStatusCode } from './espn-mappers.ts'
+import { scheduleEventSchema, scoreboardSchema, searchSchema, summarySchema } from './espn-schemas.ts'
 
 describe('toStatusCode', () => {
   it.each([
@@ -55,6 +55,39 @@ describe('scheduleEventToFixture', () => {
     raw.competitions[0].competitors = raw.competitions[0].competitors.slice(0, 1)
 
     expect(scheduleEventToFixture(scheduleEventSchema.parse(raw))).toBeUndefined()
+  })
+})
+
+describe('scoreboardToFixtures', () => {
+  const parse = (events: ReturnType<typeof espnScoreboardEvent>[]) => scoreboardToFixtures(scoreboardSchema.parse(espnScoreboard(events, 'per.1', 'Peruvian Liga 1')))
+
+  it('should_map_a_finished_match_with_the_competition_of_the_scoreboard', () => {
+    const [fixture] = parse([espnScoreboardEvent({ id: 9, homeId: 30, awayId: 40, homeScore: '3', awayScore: '0' })])
+
+    expect(fixture).toMatchObject({
+      fixture: { id: 9, status: { short: 'FT' } },
+      league: { id: 'per.1', name: 'Peruvian Liga 1', season: 2026 },
+      teams: { home: { id: 30, logo: 'https://logos.test/30.png' }, away: { id: 40 } },
+      goals: { home: 3, away: 0 },
+    })
+  })
+
+  it('should_report_a_match_in_play_as_live_with_its_current_score', () => {
+    const [fixture] = parse([espnScoreboardEvent({ statusName: 'STATUS_SECOND_HALF', statusState: 'in', homeScore: '1', awayScore: '1' })])
+
+    expect(fixture.fixture.status.short).toBe('LIVE')
+    expect(fixture.goals).toEqual({ home: 1, away: 1 })
+  })
+
+  it('should_ignore_the_placeholder_score_when_the_match_has_not_started', () => {
+    const [fixture] = parse([espnScoreboardEvent({ statusName: 'STATUS_SCHEDULED', statusState: 'pre', homeScore: '0', awayScore: '0' })])
+
+    expect(fixture.fixture.status.short).toBe('NS')
+    expect(fixture.goals).toEqual({ home: null, away: null })
+  })
+
+  it('should_return_nothing_when_the_scoreboard_has_no_matches', () => {
+    expect(parse([])).toEqual([])
   })
 })
 

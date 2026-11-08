@@ -1,4 +1,4 @@
-import type { AnalysisResponse, Fixture, TeamAnalysis, TeamFixturesResponse } from '@futbol/core'
+import type { AnalysisResponse, Fixture, MatchdayResponse, TeamAnalysis, TeamFixturesResponse } from '@futbol/core'
 import { describe, expect, it, vi } from 'vitest'
 import { createApp } from './app.ts'
 import { EspnError, NotFoundError } from './errors.ts'
@@ -11,10 +11,11 @@ const ANALYSIS_URL = `/api/analysis?home=10&away=20&kickoff=${encodeURIComponent
 function createTestApp(options: { analyze?: () => Promise<AnalysisResponse>; fixtures?: Fixture[] } = {}) {
   const analyze = vi.fn(options.analyze ?? (async () => ({}) as AnalysisResponse))
   const teamForm = vi.fn(async () => ({}) as TeamAnalysis)
+  const matchesOfDay = vi.fn(async () => ({ date: '2026-10-25', competitions: [], unavailable: [] }) as MatchdayResponse)
   const getSeasonFixtures = vi.fn(async () => ({ season: CURRENT_SEASON, fixtures: options.fixtures ?? [] }))
   const football = buildFootballStub({ searchTeams: vi.fn(async () => []), getSeasonFixtures })
-  const app = createApp({ football, analysis: { analyze, teamForm }, now: () => NOW })
-  return { app, analyze, teamForm, football, getSeasonFixtures }
+  const app = createApp({ football, analysis: { analyze, teamForm }, matchday: { matchesOfDay }, now: () => NOW })
+  return { app, analyze, teamForm, matchesOfDay, football, getSeasonFixtures }
 }
 
 describe('team search route', () => {
@@ -63,6 +64,18 @@ describe('team fixtures route', () => {
     const response = await app.request('/api/teams/abc/fixtures')
 
     expect(response.status).toBe(400)
+  })
+})
+
+describe('matches of the day route', () => {
+  it('should_ask_for_the_matches_of_the_current_time', async () => {
+    const { app, matchesOfDay } = createTestApp()
+
+    const response = await app.request('/api/matches/today')
+
+    expect(response.status).toBe(200)
+    expect(matchesOfDay).toHaveBeenCalledExactlyOnceWith(NOW)
+    expect(await response.json()).toEqual({ date: '2026-10-25', competitions: [], unavailable: [] })
   })
 })
 

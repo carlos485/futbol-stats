@@ -1,14 +1,15 @@
 import { describe, expect, it, vi } from 'vitest'
 import { CacheStore } from '../cache/cache-store.ts'
 import { NotFoundError } from '../errors.ts'
-import { CURRENT_SEASON, createTestDatabase, espnSchedule, espnScheduleEvent, espnSummary } from '../testing/builders.ts'
+import { CURRENT_SEASON, createTestDatabase, espnSchedule, espnScheduleEvent, espnScoreboard, espnScoreboardEvent, espnSummary } from '../testing/builders.ts'
 import type { EspnSource } from './espn-client.ts'
 import { EspnFootballData } from './espn-football-data.ts'
 
 const SITE = 'https://espn.test/site'
 const SEARCH = 'https://espn.test/search'
 const TEAM_ID = 10
-const MS_PER_HOUR = 60 * 60 * 1000
+const MS_PER_MINUTE = 60 * 1000
+const MS_PER_HOUR = 60 * MS_PER_MINUTE
 
 type Responder = (url: string) => unknown
 
@@ -113,6 +114,40 @@ describe('EspnFootballData.getSeasonFixtures', () => {
     const { fixtures } = await service.getSeasonFixtures(TEAM_ID)
 
     expect(fixtures.map((fixture) => fixture.league.id)).toEqual(['esp.1', 'uefa.champions'])
+  })
+})
+
+describe('EspnFootballData.getScoreboard', () => {
+  it('should_request_the_scoreboard_of_the_competition_for_the_given_espn_date', async () => {
+    const { service, get } = createService(() => espnScoreboard([espnScoreboardEvent({ id: 5 })]))
+
+    const fixtures = await service.getScoreboard('esp.1', '20261025')
+
+    expect(fixtures.map((fixture) => fixture.fixture.id)).toEqual([5])
+    expect(get).toHaveBeenCalledExactlyOnceWith(`${SITE}/esp.1/scoreboard?dates=20261025`, expect.anything())
+  })
+
+  it('should_keep_live_scores_fresh_by_caching_for_only_a_minute', async () => {
+    const { service, get, clock } = createService(() => espnScoreboard([]))
+    await service.getScoreboard('esp.1', '20261025')
+
+    clock.time += MS_PER_MINUTE - 1
+    await service.getScoreboard('esp.1', '20261025')
+    expect(get).toHaveBeenCalledOnce()
+
+    clock.time += 1
+    await service.getScoreboard('esp.1', '20261025')
+    expect(get).toHaveBeenCalledTimes(2)
+  })
+
+  it('should_cache_each_competition_and_date_separately', async () => {
+    const { service, get } = createService(() => espnScoreboard([]))
+
+    await service.getScoreboard('esp.1', '20261025')
+    await service.getScoreboard('esp.1', '20261026')
+    await service.getScoreboard('fra.1', '20261025')
+
+    expect(get).toHaveBeenCalledTimes(3)
   })
 })
 

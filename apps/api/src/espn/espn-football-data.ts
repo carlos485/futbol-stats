@@ -6,10 +6,11 @@ import { isFinished } from '../fixture-selection.ts'
 import type { FootballData, SeasonFixtures } from '../football-data.ts'
 import { logger } from '../logger.ts'
 import type { EspnSource } from './espn-client.ts'
-import { scheduleEventToFixture, searchItemToTeam, summaryToFixture } from './espn-mappers.ts'
-import { scheduleSchema, searchSchema, summarySchema } from './espn-schemas.ts'
+import { scheduleEventToFixture, scoreboardToFixtures, searchItemToTeam, summaryToFixture } from './espn-mappers.ts'
+import { scheduleSchema, scoreboardSchema, searchSchema, summarySchema } from './espn-schemas.ts'
 
-const MS_PER_HOUR = 60 * 60 * 1000
+const MS_PER_MINUTE = 60 * 1000
+const MS_PER_HOUR = 60 * MS_PER_MINUTE
 const MS_PER_DAY = 24 * MS_PER_HOUR
 
 const CacheTtl = {
@@ -17,6 +18,8 @@ const CacheTtl = {
   // The current calendar changes after every matchday; past seasons never do.
   currentSeason: MS_PER_HOUR,
   pastSeason: 30 * MS_PER_DAY,
+  // Scoreboards carry live scores, so they are kept only briefly.
+  scoreboard: MS_PER_MINUTE,
 } as const
 
 const SEARCH_RESULTS_LIMIT = 10
@@ -56,6 +59,13 @@ export class EspnFootballData implements FootballData {
     return this.cached(this.calendarKey(teamId, String(season)), seasonFixturesSchema, CacheTtl.pastSeason, () =>
       this.loadPastSeason(teamId, season),
     )
+  }
+
+  getScoreboard(competitionId: string, espnDate: string): Promise<Fixture[]> {
+    return this.cached(`espn:scoreboard:${competitionId}:${espnDate}`, z.array(fixtureSchema), CacheTtl.scoreboard, async () => {
+      const url = `${this.leagueUrl(competitionId)}/scoreboard?dates=${espnDate}`
+      return scoreboardToFixtures(await this.source.get(url, scoreboardSchema))
+    })
   }
 
   /** Finished matches never change, so their summary is cached forever. */

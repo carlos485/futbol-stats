@@ -7,6 +7,7 @@ import { createDatabase } from './db/database.ts'
 import { EspnClient } from './espn/espn-client.ts'
 import { EspnFootballData } from './espn/espn-football-data.ts'
 import { logger } from './logger.ts'
+import { MatchdayService } from './matchday-service.ts'
 
 const config = loadConfig()
 const database = createDatabase(config.databasePath)
@@ -15,7 +16,7 @@ const football = new EspnFootballData(new EspnClient(), new CacheStore(database)
   siteApiUrl: config.espnSiteApiUrl,
   searchApiUrl: config.espnSearchApiUrl,
 })
-const app = createApp({ football, analysis: new AnalysisService(football) })
+const app = createApp({ football, analysis: new AnalysisService(football), matchday: new MatchdayService(football) })
 
 serve({ fetch: app.fetch, port: config.port }, (info) => {
   logger.info(`Server is running on http://localhost:${info.port}`)

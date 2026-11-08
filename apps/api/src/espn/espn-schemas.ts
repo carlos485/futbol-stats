@@ -65,6 +65,26 @@ export const summarySchema = z.object({
     .optional(),
 })
 
+const scoreboardCompetitorSchema = z.object({
+  homeAway: homeAwaySchema,
+  score: z.string().optional(),
+  team: z.object({ id: z.string(), displayName: z.string(), logo: z.string().optional(), logos: logosSchema }),
+})
+
+export const scoreboardSchema = z.object({
+  leagues: z.array(leagueSchema).min(1),
+  events: z
+    .array(
+      z.object({
+        id: z.string(),
+        date: z.string(),
+        season: z.object({ year: z.number() }),
+        competitions: z.array(z.object({ status: statusSchema, competitors: z.array(scoreboardCompetitorSchema) })).min(1),
+      }),
+    )
+    .default([]),
+})
+
 export const searchSchema = z.object({
   items: z
     .array(
@@ -81,5 +101,6 @@ export const searchSchema = z.object({
 })
 
 export type ScheduleEvent = z.infer<typeof scheduleEventSchema>
+export type Scoreboard = z.infer<typeof scoreboardSchema>
 export type Summary = z.infer<typeof summarySchema>
 export type SearchItem = z.infer<typeof searchSchema>['items'][number]

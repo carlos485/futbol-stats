@@ -45,6 +45,7 @@ export function createTestDatabase() {
 export function buildFootballStub(overrides: Partial<FootballData> = {}): FootballData {
   return {
     searchTeams: async () => [],
+    getScoreboard: async () => [],
     getSeasonFixtures: async (_team, season) => ({ season: season ?? CURRENT_SEASON, fixtures: [] }),
     getFixtureDetails: async () => undefined,
     ...overrides,
@@ -142,4 +143,48 @@ export function espnSummary({
       ],
     },
   }
+}
+
+interface EspnScoreboardEventOverrides {
+  id?: number
+  date?: string
+  homeId?: number
+  awayId?: number
+  homeScore?: string
+  awayScore?: string
+  statusName?: string
+  statusState?: string
+}
+
+/** A scoreboard event shaped like ESPN's `/scoreboard` payload (scores are strings, the logo sits on the team). */
+export function espnScoreboardEvent({
+  id = 1,
+  date = '2026-10-25T18:00Z',
+  homeId = 10,
+  awayId = 20,
+  homeScore = '2',
+  awayScore = '1',
+  statusName = 'STATUS_FULL_TIME',
+  statusState = 'post',
+}: EspnScoreboardEventOverrides = {}) {
+  const competitor = (homeAway: 'home' | 'away', teamId: number, score: string) => ({
+    homeAway,
+    score,
+    team: { id: String(teamId), displayName: `Team ${teamId}`, logo: `https://logos.test/${teamId}.png` },
+  })
+  return {
+    id: String(id),
+    date,
+    season: { year: CURRENT_SEASON },
+    competitions: [
+      {
+        status: { type: { name: statusName, state: statusState } },
+        competitors: [competitor('home', homeId, homeScore), competitor('away', awayId, awayScore)],
+      },
+    ],
+  }
+}
+
+export function espnScoreboard(events: ReturnType<typeof espnScoreboardEvent>[], slug = 'eng.1', name = 'English Premier League') {
+  return { leagues: [{ slug, name }], events }
 }

@@ -6,6 +6,7 @@ import { BadRequestError, HttpError } from './errors.ts'
 import { selectPlayed, selectUpcoming } from './fixture-selection.ts'
 import type { FootballData } from './football-data.ts'
 import { logger } from './logger.ts'
+import type { MatchdayService } from './matchday-service.ts'
 
 const MIN_SEARCH_LENGTH = 3
 
@@ -21,6 +22,7 @@ const analysisQuerySchema = z.object({
 export interface AppDependencies {
   football: FootballData
   analysis: Pick<AnalysisService, 'analyze' | 'teamForm'>
+  matchday: Pick<MatchdayService, 'matchesOfDay'>
   now?: () => Date
 }
 
@@ -32,7 +34,7 @@ function parseOrThrow<Schema extends z.ZodType>(schema: Schema, input: unknown):
   return parsed.data
 }
 
-export function createApp({ football, analysis, now = () => new Date() }: AppDependencies): Hono {
+export function createApp({ football, analysis, matchday, now = () => new Date() }: AppDependencies): Hono {
   const app = new Hono()
 
   app.onError((error, context) => {
@@ -42,6 +44,8 @@ export function createApp({ football, analysis, now = () => new Date() }: AppDep
     logger.warn(`[api] unhandled error: ${error.stack ?? error.message}`)
     return context.json({ error: 'Internal server error' }, 500)
   })
+
+  app.get('/api/matches/today', async (context) => context.json(await matchday.matchesOfDay(now())))
 
   app.get('/api/teams/search', async (context) => {
     const { q } = parseOrThrow(searchQuerySchema, context.req.query())

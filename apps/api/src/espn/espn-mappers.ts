@@ -1,5 +1,5 @@
 import { StatisticType, type Fixture, type Team, type TeamStatistics } from '@futbol/core'
-import type { ScheduleEvent, SearchItem, Summary } from './espn-schemas.ts'
+import type { ScheduleEvent, Scoreboard, SearchItem, Summary } from './espn-schemas.ts'
 
 // Pre-season and exhibition games: noisy form data that rarely has box score statistics.
 const FRIENDLY_LEAGUE_PREFIXES = ['club.friendly', 'friendly.']
@@ -26,6 +26,7 @@ const ESPN_STATISTIC_TO_TYPE: Record<string, StatisticType> = {
 interface EspnTeam {
   id: string
   displayName: string
+  logo?: string | undefined
   logos?: { href: string }[] | undefined
 }
 
@@ -33,8 +34,8 @@ interface EspnStatus {
   type: { name: string; state: string }
 }
 
-function toLogo(team: { id: string; logos?: { href: string }[] | undefined }): string {
-  return team.logos?.[0]?.href ?? `${DEFAULT_LOGO_BASE_URL}/${team.id}.png`
+function toLogo(team: { id: string; logo?: string | undefined; logos?: { href: string }[] | undefined }): string {
+  return team.logo ?? team.logos?.[0]?.href ?? `${DEFAULT_LOGO_BASE_URL}/${team.id}.png`
 }
 
 function toFixtureTeam(team: EspnTeam) {
@@ -119,4 +120,24 @@ export function searchItemToTeam(item: SearchItem): Team | undefined {
     team: { id: Number(item.id), name: item.displayName, logo: toLogo(item) },
     league: { id: item.league },
   }
+}
+
+/** The matches of one competition on a scoreboard. Matches not started yet carry a placeholder score, so it is ignored. */
+export function scoreboardToFixtures(scoreboard: Scoreboard): Fixture[] {
+  const league = scoreboard.leagues[0]
+  return scoreboard.events.flatMap((event) => {
+    const competition = event.competitions[0]
+    const home = competition.competitors.find((competitor) => competitor.homeAway === 'home')
+    const away = competition.competitors.find((competitor) => competitor.homeAway === 'away')
+    if (!home || !away) return []
+    const notStarted = competition.status.type.state === 'pre'
+    return [
+      {
+        fixture: { id: Number(event.id), date: event.date, status: { short: toStatusCode(competition.status) } },
+        league: { id: league.slug, name: league.name, season: event.season.year },
+        teams: { home: toFixtureTeam(home.team), away: toFixtureTeam(away.team) },
+        goals: notStarted ? { home: null, away: null } : { home: parseScore(home.score), away: parseScore(away.score) },
+      },
+    ]
+  })
 }
