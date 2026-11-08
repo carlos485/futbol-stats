@@ -1,7 +1,19 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchAnalysis, fetchTeamFixtures, fetchTeamForm, fetchTeams, type AnalysisParams } from '@/lib/api'
+import { fetchAnalysis, fetchMatchday, fetchTeamFixtures, fetchTeamForm, fetchTeams, type AnalysisParams } from '@/lib/api'
 
 export const MIN_SEARCH_LENGTH = 3
+
+// Scores change while matches are being played, so the list is refreshed every minute (the API caches that long).
+const MATCHDAY_REFRESH_MS = 60 * 1000
+
+export function useMatchday() {
+  return useQuery({
+    queryKey: ['matchday'],
+    queryFn: ({ signal }) => fetchMatchday(signal),
+    staleTime: MATCHDAY_REFRESH_MS,
+    refetchInterval: MATCHDAY_REFRESH_MS,
+  })
+}
 
 export function useTeamSearch(query: string) {
   const search = query.trim().toLowerCase()

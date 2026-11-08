@@ -1,10 +1,13 @@
 import type { Fixture, Team } from '@futbol/core'
+import { ArrowLeftIcon } from 'lucide-react'
 import { ErrorMessage } from '@/components/error-message'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { FixtureRow } from '@/components/fixture-row'
+import { Button } from '@/components/ui/button'
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useTeamFixtures } from '@/hooks/use-football-queries'
-import { formatLimaDateTime, formatScore } from '@/lib/format'
+import { formatLimaDateTime } from '@/lib/format'
 
 const SKELETON_ROWS = 3
 
@@ -12,9 +15,11 @@ interface TeamFixturesProps {
   team: Team
   selectedFixtureId: number | null
   onSelect: (fixture: Fixture) => void
+  /** Leaves the team and goes back to the matches of the day. */
+  onBack: () => void
 }
 
-export function TeamFixtures({ team, selectedFixtureId, onSelect }: TeamFixturesProps) {
+export function TeamFixtures({ team, selectedFixtureId, onSelect, onBack }: TeamFixturesProps) {
   const { data, isPending, isError, error } = useTeamFixtures(team.team.id)
 
   return (
@@ -24,15 +29,19 @@ export function TeamFixtures({ team, selectedFixtureId, onSelect }: TeamFixtures
           Partidos de {team.team.name}
           {data ? ` · temporada ${data.season}` : null}
         </CardTitle>
-        <CardDescription>
-          Todas las competiciones. Elige un partido: se analiza con los 5 partidos previos de cada equipo y su historial directo.
-        </CardDescription>
+        <CardDescription>Todas las competiciones. Elige un partido para ver su análisis.</CardDescription>
+        <CardAction>
+          <Button variant="ghost" size="sm" onClick={onBack}>
+            <ArrowLeftIcon />
+            Hoy
+          </Button>
+        </CardAction>
       </CardHeader>
       <CardContent>
         {isPending ? (
           <div className="flex flex-col gap-2">
             {Array.from({ length: SKELETON_ROWS }, (_, index) => (
-              <Skeleton key={index} className="h-12 w-full" />
+              <Skeleton key={index} className="h-16 w-full" />
             ))}
           </div>
         ) : null}
@@ -78,31 +87,22 @@ function FixtureList({ fixtures, emptyMessage, selectedFixtureId, onSelect }: Fi
     return <p className="py-3 text-sm text-muted-foreground">{emptyMessage}</p>
   }
   return (
-    <div className="flex max-h-96 flex-col gap-2 overflow-y-auto pt-2">
-      {fixtures.map((fixture) => {
-        const hasScore = fixture.goals.home !== null && fixture.goals.away !== null
-        return (
-          <button
-            key={fixture.fixture.id}
-            type="button"
-            onClick={() => onSelect(fixture)}
-            aria-pressed={fixture.fixture.id === selectedFixtureId}
-            className="flex items-center gap-3 rounded-lg border p-3 text-left transition-colors hover:bg-muted aria-pressed:border-primary aria-pressed:bg-muted"
-          >
-            <img src={fixture.teams.home.logo} alt="" className="size-7 object-contain" />
-            <span className="font-medium">
-              {fixture.teams.home.name} {hasScore ? formatScore(fixture.goals.home, fixture.goals.away) : 'vs'}{' '}
-              {fixture.teams.away.name}
-            </span>
-            <img src={fixture.teams.away.logo} alt="" className="size-7 object-contain" />
-            <span className="ml-auto text-right text-xs text-muted-foreground">
+    <div className="flex flex-col gap-2 pt-2 xl:max-h-[calc(100svh-17rem)] xl:overflow-y-auto">
+      {fixtures.map((fixture) => (
+        <FixtureRow
+          key={fixture.fixture.id}
+          fixture={fixture}
+          selected={fixture.fixture.id === selectedFixtureId}
+          onSelect={onSelect}
+          detail={
+            <>
               {fixture.league.name}
               <br />
               {formatLimaDateTime(fixture.fixture.date)}
-            </span>
-          </button>
-        )
-      })}
+            </>
+          }
+        />
+      ))}
     </div>
   )
 }

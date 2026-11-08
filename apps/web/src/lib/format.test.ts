@@ -1,6 +1,6 @@
 import type { TeamMatchStats } from '@futbol/core'
 import { describe, expect, it } from 'vitest'
-import { formatAverage, formatCorners, formatLimaDate, formatLimaDateTime, formatScore, formatShare } from './format'
+import { formatAverage, formatCorners, formatLimaDate, formatLimaDateTime, formatLimaDay, formatLimaTime, formatScore, formatShare } from './format'
 
 const EMPTY_STATS: TeamMatchStats = {
   goalsFor: 0,
@@ -18,6 +18,18 @@ const EMPTY_STATS: TeamMatchStats = {
 describe('format helpers', () => {
   it('should_show_lima_time_when_formatting_a_utc_date', () => {
     expect(formatLimaDateTime('2026-01-16T00:00:00.000Z')).toMatch(/7:00/)
+  })
+
+  it('should_show_the_kickoff_in_24_hour_lima_time', () => {
+    expect(formatLimaTime('2026-10-25T23:00:00Z')).toBe('18:00')
+    expect(formatLimaTime('2026-10-25T11:30Z')).toBe('06:30')
+  })
+
+  it('should_write_a_lima_day_in_long_form_without_shifting_it', () => {
+    const text = formatLimaDay('2026-10-25')
+    expect(text).toContain('25')
+    expect(text.toLowerCase()).toContain('octubre')
+    expect(text.toLowerCase()).toContain('domingo')
   })
 
   it('should_use_the_lima_day_when_formatting_only_the_date', () => {

@@ -1,31 +1,37 @@
 import type { Fixture, Team } from '@futbol/core'
+import { MousePointerClickIcon } from 'lucide-react'
 import { useState } from 'react'
 import { AnalysisView } from '@/components/analysis/analysis-view'
+import { TodaysMatches } from '@/components/matches/todays-matches'
 import { TeamFixtures } from '@/components/team-fixtures'
-import { TeamPanel, type RivalTeam } from '@/components/team-panel/team-panel'
+import { TeamPanel } from '@/components/team-panel/team-panel'
+import { TeamSearch } from '@/components/team-search'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { useTheme } from '@/hooks/use-theme'
-
-function findRival(fixture: Fixture | null, team: Team | null): RivalTeam | null {
-  if (!fixture || !team) return null
-  const { home, away } = fixture.teams
-  return home.id === team.team.id ? away : home
-}
+import { selectPanelTeams } from '@/lib/panel-teams'
 
 function App() {
   const [team, setTeam] = useState<Team | null>(null)
   const [fixture, setFixture] = useState<Fixture | null>(null)
   const { theme, changeTheme } = useTheme()
+  const { subject, rival } = selectPanelTeams(team, fixture)
 
   function handleSelectTeam(selected: Team) {
     setTeam(selected)
     setFixture(null)
   }
 
+  function handleBackToToday() {
+    setTeam(null)
+    setFixture(null)
+  }
+
+  const selectedFixtureId = fixture?.fixture.id ?? null
+
   return (
     <div className="min-h-svh bg-background text-foreground">
       <header className="border-b">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
+        <div className="mx-auto flex max-w-[110rem] items-center justify-between gap-4 px-4 py-3">
           <h1 className="font-heading text-lg font-semibold">Futbol Stats</h1>
           <div className="flex items-center gap-3">
             <span className="hidden text-xs text-muted-foreground sm:inline">Datos: ESPN (API no oficial)</span>
@@ -33,16 +39,29 @@ function App() {
           </div>
         </div>
       </header>
-      <main className="mx-auto grid max-w-7xl gap-6 px-4 py-6 lg:grid-cols-[20rem_minmax(0,1fr)]">
-        <aside>
-          <TeamPanel team={team} rival={findRival(fixture, team)} onSelectTeam={handleSelectTeam} />
+      <main className="mx-auto grid max-w-[110rem] gap-6 px-4 py-6 lg:grid-cols-[24rem_minmax(0,1fr)] xl:grid-cols-[24rem_minmax(0,24rem)_minmax(0,1fr)]">
+        <aside aria-label="Búsqueda y partidos de hoy" className="flex flex-col gap-4">
+          <TeamSearch selected={team} onSelect={handleSelectTeam} />
+          <TodaysMatches selectedFixtureId={selectedFixtureId} onSelect={setFixture} />
         </aside>
-        {/* The remaining columns are not designed yet; the existing views stay here as they were. */}
-        <div className="flex min-w-0 flex-col gap-6">
-          {team ? (
-            <TeamFixtures team={team} selectedFixtureId={fixture?.fixture.id ?? null} onSelect={setFixture} />
-          ) : null}
-          {fixture ? <AnalysisView key={fixture.fixture.id} fixture={fixture} /> : null}
+        {/* Below the xl breakpoint columns 2 and 3 share one stacked column; from xl they become grid columns. */}
+        <div className="flex min-w-0 flex-col gap-6 xl:contents">
+          <section aria-label="Equipo" className="flex min-w-0 flex-col gap-4">
+            <TeamPanel subject={subject} rival={rival} />
+            {team ? (
+              <TeamFixtures team={team} selectedFixtureId={selectedFixtureId} onSelect={setFixture} onBack={handleBackToToday} />
+            ) : null}
+          </section>
+          <section aria-label="Análisis" className="min-w-0">
+            {fixture ? (
+              <AnalysisView key={fixture.fixture.id} fixture={fixture} />
+            ) : (
+              <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
+                <MousePointerClickIcon className="size-6" />
+                <p>Elige un partido para ver su análisis.</p>
+              </div>
+            )}
+          </section>
         </div>
       </main>
     </div>

@@ -16,12 +16,26 @@ const dateTimeFormat = new Intl.DateTimeFormat(LOCALE, {
 
 const dateFormat = new Intl.DateTimeFormat(LOCALE, { timeZone: LIMA_TIME_ZONE, dateStyle: 'medium' })
 
+const timeFormat = new Intl.DateTimeFormat(LOCALE, { timeZone: LIMA_TIME_ZONE, hour: '2-digit', minute: '2-digit', hour12: false })
+
+const longDayFormat = new Intl.DateTimeFormat(LOCALE, { timeZone: LIMA_TIME_ZONE, dateStyle: 'full' })
+
 export function formatLimaDateTime(isoDate: string): string {
   return dateTimeFormat.format(new Date(isoDate))
 }
 
 export function formatLimaDate(isoDate: string): string {
   return dateFormat.format(new Date(isoDate))
+}
+
+export function formatLimaTime(isoDate: string): string {
+  return timeFormat.format(new Date(isoDate))
+}
+
+/** A `YYYY-MM-DD` Lima day as a long date, e.g. "domingo, 25 de octubre de 2026". */
+export function formatLimaDay(day: string): string {
+  // Noon UTC is 07:00 in Lima, so it stays on the same calendar day.
+  return longDayFormat.format(new Date(`${day}T12:00:00Z`))
 }
 
 export function formatCount(value: number | null): string {

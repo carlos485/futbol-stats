@@ -1,4 +1,4 @@
-import type { AnalysisResponse, Team, TeamAnalysis, TeamFixturesResponse } from '@futbol/core'
+import type { AnalysisResponse, MatchdayResponse, Team, TeamAnalysis, TeamFixturesResponse } from '@futbol/core'
 
 export class ApiRequestError extends Error {
   readonly status: number
@@ -41,6 +41,10 @@ export function fetchTeams(query: string, signal: AbortSignal): Promise<Team[]> 
 
 export function fetchTeamFixtures(teamId: number, signal: AbortSignal): Promise<TeamFixturesResponse> {
   return getJson(`/api/teams/${teamId}/fixtures`, signal)
+}
+
+export function fetchMatchday(signal: AbortSignal): Promise<MatchdayResponse> {
+  return getJson('/api/matches/today', signal)
 }
 
 export function fetchTeamForm(teamId: number, signal: AbortSignal): Promise<TeamAnalysis> {
