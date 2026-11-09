@@ -12,18 +12,15 @@ interface TeamCardProps {
   teamId: number
   name: string
   logo: string
-  /** Small label above the crest, e.g. "Rival". */
-  caption?: string
 }
 
-export function TeamCard({ teamId, name, logo, caption }: TeamCardProps) {
+export function TeamCard({ teamId, name, logo }: TeamCardProps) {
   const { data, isPending, isError, error } = useTeamForm(teamId)
 
   return (
     <Card>
       <CardContent className="flex flex-col items-center gap-4">
         <div className="flex flex-col items-center gap-3 text-center">
-          {caption ? <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{caption}</span> : null}
           <img src={logo} alt="" className="size-20 object-contain" />
           <h2 className="font-heading text-lg font-semibold">{name}</h2>
         </div>

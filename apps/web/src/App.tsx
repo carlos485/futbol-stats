@@ -8,13 +8,11 @@ import { TeamPanel } from '@/components/team-panel/team-panel'
 import { TeamSearch } from '@/components/team-search'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { useTheme } from '@/hooks/use-theme'
-import { selectPanelTeams } from '@/lib/panel-teams'
 
 function App() {
   const [team, setTeam] = useState<Team | null>(null)
   const [fixture, setFixture] = useState<Fixture | null>(null)
   const { theme, changeTheme } = useTheme()
-  const { subject, rival } = selectPanelTeams(team, fixture)
 
   function handleSelectTeam(selected: Team) {
     setTeam(selected)
@@ -27,6 +25,8 @@ function App() {
   }
 
   const selectedFixtureId = fixture?.fixture.id ?? null
+  // Once a match is chosen only its own analysis is shown, so the middle column holds just the searched team's fixtures.
+  const showTeamColumn = team !== null || fixture === null
 
   return (
     <div className="min-h-svh bg-background text-foreground">
@@ -39,19 +39,25 @@ function App() {
           </div>
         </div>
       </header>
-      <main className="mx-auto grid max-w-[110rem] gap-6 px-4 py-6 lg:grid-cols-[24rem_minmax(0,1fr)] xl:grid-cols-[24rem_minmax(0,24rem)_minmax(0,1fr)]">
+      <main
+        className={`mx-auto grid max-w-[110rem] gap-6 px-4 py-6 lg:grid-cols-[24rem_minmax(0,1fr)] ${
+          showTeamColumn ? 'xl:grid-cols-[24rem_minmax(0,24rem)_minmax(0,1fr)]' : ''
+        }`}
+      >
         <aside aria-label="Búsqueda y partidos de hoy" className="flex flex-col gap-4">
           <TeamSearch selected={team} onSelect={handleSelectTeam} />
           <TodaysMatches selectedFixtureId={selectedFixtureId} onSelect={setFixture} />
         </aside>
         {/* Below the xl breakpoint columns 2 and 3 share one stacked column; from xl they become grid columns. */}
         <div className="flex min-w-0 flex-col gap-6 xl:contents">
-          <section aria-label="Equipo" className="flex min-w-0 flex-col gap-4">
-            <TeamPanel subject={subject} rival={rival} />
-            {team ? (
-              <TeamFixtures team={team} selectedFixtureId={selectedFixtureId} onSelect={setFixture} onBack={handleBackToToday} />
-            ) : null}
-          </section>
+          {showTeamColumn ? (
+            <section aria-label="Equipo" className="flex min-w-0 flex-col gap-4">
+              {fixture ? null : <TeamPanel team={team} />}
+              {team ? (
+                <TeamFixtures team={team} selectedFixtureId={selectedFixtureId} onSelect={setFixture} onBack={handleBackToToday} />
+              ) : null}
+            </section>
+          ) : null}
           <section aria-label="Análisis" className="min-w-0">
             {fixture ? (
               <AnalysisView key={fixture.fixture.id} fixture={fixture} />
