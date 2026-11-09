@@ -1,17 +1,22 @@
 import type { AnalysisResponse } from '@futbol/core'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatShare } from '@/lib/format'
+import { pickSideColors } from '@/lib/team-colors'
+
+const DRAW_COLOR = 'var(--chart-3)'
 
 const PERCENT_FACTOR = 100
 const EXPECTED_GOALS_DECIMALS = 2
 
 interface ProbabilityCardProps {
   prediction: AnalysisResponse['prediction']
+  colors: AnalysisResponse['colors']
   homeName: string
   awayName: string
 }
 
-export function ProbabilityCard({ prediction, homeName, awayName }: ProbabilityCardProps) {
+export function ProbabilityCard({ prediction, colors, homeName, awayName }: ProbabilityCardProps) {
+  const sideColors = pickSideColors(colors.home, colors.away)
   return (
     <Card>
       <CardHeader>
@@ -23,9 +28,9 @@ export function ProbabilityCard({ prediction, homeName, awayName }: ProbabilityC
           <>
             <OutcomeBar
               outcomes={[
-                { label: homeName, share: prediction.teamAWin, colorClass: 'bg-chart-1' },
-                { label: 'Empate', share: prediction.draw, colorClass: 'bg-chart-3' },
-                { label: awayName, share: prediction.teamBWin, colorClass: 'bg-chart-2' },
+                { label: homeName, share: prediction.teamAWin, color: sideColors.home },
+                { label: 'Empate', share: prediction.draw, color: DRAW_COLOR },
+                { label: awayName, share: prediction.teamBWin, color: sideColors.away },
               ]}
             />
             <p className="text-sm">
@@ -52,7 +57,8 @@ export function ProbabilityCard({ prediction, homeName, awayName }: ProbabilityC
 interface Outcome {
   label: string
   share: number
-  colorClass: string
+  /** Any CSS color: a hex value or a theme variable. */
+  color: string
 }
 
 function OutcomeBar({ outcomes }: { outcomes: Outcome[] }) {
@@ -62,8 +68,7 @@ function OutcomeBar({ outcomes }: { outcomes: Outcome[] }) {
         {outcomes.map((outcome) => (
           <div
             key={outcome.label}
-            className={outcome.colorClass}
-            style={{ width: `${outcome.share * PERCENT_FACTOR}%` }}
+            style={{ width: `${outcome.share * PERCENT_FACTOR}%`, backgroundColor: outcome.color }}
           />
         ))}
       </div>
@@ -71,7 +76,7 @@ function OutcomeBar({ outcomes }: { outcomes: Outcome[] }) {
         {outcomes.map((outcome) => (
           <div key={outcome.label}>
             <dt className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-              <span className={`size-2 rounded-full ${outcome.colorClass}`} />
+              <span className="size-2 rounded-full" style={{ backgroundColor: outcome.color }} />
               {outcome.label}
             </dt>
             <dd className="text-lg font-semibold">{formatShare(outcome.share)}</dd>

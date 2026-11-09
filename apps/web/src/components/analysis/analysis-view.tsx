@@ -35,7 +35,7 @@ export function AnalysisView({ fixture }: AnalysisViewProps) {
             warnings={data.warnings}
             teamNames={{ [fixture.teams.home.id]: homeName, [fixture.teams.away.id]: awayName }}
           />
-          <ProbabilityCard prediction={data.prediction} homeName={homeName} awayName={awayName} />
+          <ProbabilityCard prediction={data.prediction} colors={data.colors} homeName={homeName} awayName={awayName} />
           <Card>
             <CardContent>
               <Tabs defaultValue="home">
