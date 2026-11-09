@@ -1,4 +1,4 @@
-import { fixtureSchema, teamSchema, type Fixture, type Team } from '@futbol/core'
+import { fixtureSchema, teamSchema, type Fixture, type Team, type TeamColors } from '@futbol/core'
 import { z } from 'zod'
 import { NEVER_EXPIRES, type CacheStore } from '../cache/cache-store.ts'
 import { NotFoundError } from '../errors.ts'
@@ -6,8 +6,14 @@ import { isFinished } from '../fixture-selection.ts'
 import type { FootballData, SeasonFixtures } from '../football-data.ts'
 import { logger } from '../logger.ts'
 import type { EspnSource } from './espn-client.ts'
-import { scheduleEventToFixture, scoreboardToFixtures, searchItemToTeam, summaryToFixture } from './espn-mappers.ts'
-import { scheduleSchema, scoreboardSchema, searchSchema, summarySchema } from './espn-schemas.ts'
+import {
+  scheduleEventToFixture,
+  scoreboardToFixtures,
+  searchItemToTeam,
+  summaryToFixture,
+  teamDetailToColors,
+} from './espn-mappers.ts'
+import { scheduleSchema, scoreboardSchema, searchSchema, summarySchema, teamDetailSchema } from './espn-schemas.ts'
 
 const MS_PER_MINUTE = 60 * 1000
 const MS_PER_HOUR = 60 * MS_PER_MINUTE
@@ -20,6 +26,8 @@ const CacheTtl = {
   pastSeason: 30 * MS_PER_DAY,
   // Scoreboards carry live scores, so they are kept only briefly.
   scoreboard: MS_PER_MINUTE,
+  // Brand colors almost never change.
+  teamColors: 30 * MS_PER_DAY,
 } as const
 
 const SEARCH_RESULTS_LIMIT = 10
@@ -32,6 +40,7 @@ export interface EspnUrls {
   searchApiUrl: string
 }
 
+const teamColorsSchema = z.object({ primary: z.string(), alternate: z.string() }).nullable()
 const seasonFixturesSchema = z.object({ season: z.number(), fixtures: z.array(fixtureSchema) })
 
 export class EspnFootballData implements FootballData {
@@ -65,6 +74,13 @@ export class EspnFootballData implements FootballData {
     return this.cached(`espn:scoreboard:${competitionId}:${espnDate}`, z.array(fixtureSchema), CacheTtl.scoreboard, async () => {
       const url = `${this.leagueUrl(competitionId)}/scoreboard?dates=${espnDate}`
       return scoreboardToFixtures(await this.source.get(url, scoreboardSchema))
+    })
+  }
+
+  getTeamColors(teamId: number): Promise<TeamColors | null> {
+    return this.cached(`espn:team-colors:${teamId}`, teamColorsSchema, CacheTtl.teamColors, async () => {
+      const detail = await this.source.get(`${this.leagueUrl(ALL_COMPETITIONS)}/teams/${teamId}`, teamDetailSchema)
+      return teamDetailToColors(detail)
     })
   }
 

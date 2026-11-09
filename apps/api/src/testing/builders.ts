@@ -48,6 +48,7 @@ export function buildFootballStub(overrides: Partial<FootballData> = {}): Footba
     getScoreboard: async () => [],
     getSeasonFixtures: async (_team, season) => ({ season: season ?? CURRENT_SEASON, fixtures: [] }),
     getFixtureDetails: async () => undefined,
+    getTeamColors: async () => null,
     ...overrides,
   }
 }

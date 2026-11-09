@@ -151,6 +151,28 @@ describe('EspnFootballData.getScoreboard', () => {
   })
 })
 
+describe('EspnFootballData.getTeamColors', () => {
+  it('should_prefix_the_hex_colors_and_cache_them_when_the_team_has_colors', async () => {
+    const { service, get } = createService(() => ({ team: { color: '990000', alternateColor: 'FCE38A' } }))
+
+    const first = await service.getTeamColors(83)
+    await service.getTeamColors(83)
+
+    expect(first).toEqual({ primary: '#990000', alternate: '#FCE38A' })
+    expect(get).toHaveBeenCalledOnce()
+    expect(get.mock.calls[0][0]).toBe(`${SITE}/all/teams/83`)
+  })
+
+  it('should_cache_the_absence_when_the_team_has_no_color', async () => {
+    const { service, get } = createService(() => ({ team: {} }))
+
+    expect(await service.getTeamColors(83)).toBeNull()
+    expect(await service.getTeamColors(83)).toBeNull()
+
+    expect(get).toHaveBeenCalledOnce()
+  })
+})
+
 describe('EspnFootballData.getFixtureDetails', () => {
   it('should_encode_the_competition_slug_when_building_the_summary_url', async () => {
     const { service, get } = createService(() => espnSummary())

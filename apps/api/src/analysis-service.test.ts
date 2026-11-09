@@ -185,6 +185,28 @@ describe('AnalysisService', () => {
   })
 })
 
+describe('AnalysisService colors', () => {
+  const HOME_COLORS = { primary: '#990000', alternate: '#FCE38A' }
+
+  it('should_include_the_colors_of_both_teams_when_the_provider_has_them', async () => {
+    const getTeamColors = vi.fn(async (teamId: number) => (teamId === HOME_ID ? HOME_COLORS : null))
+
+    const result = await new AnalysisService(buildFootballStub({ getTeamColors })).analyze(request)
+
+    expect(result.colors).toEqual({ home: HOME_COLORS, away: null })
+  })
+
+  it('should_keep_the_analysis_without_colors_when_the_provider_fails_to_describe_the_team', async () => {
+    const getTeamColors = async () => {
+      throw new EspnError('boom')
+    }
+
+    const result = await new AnalysisService(buildFootballStub({ getTeamColors })).analyze(request)
+
+    expect(result.colors).toEqual({ home: null, away: null })
+  })
+})
+
 describe('AnalysisService.teamForm', () => {
   const AS_OF = '2026-10-25T12:00:00Z'
 

@@ -1,7 +1,7 @@
 import { StatisticType } from '@futbol/core'
 import { describe, expect, it } from 'vitest'
 import { espnScheduleEvent, espnScoreboard, espnScoreboardEvent, espnSummary } from '../testing/builders.ts'
-import { isFriendlyLeague, scheduleEventToFixture, scoreboardToFixtures, searchItemToTeam, summaryToFixture, toStatusCode } from './espn-mappers.ts'
+import { isFriendlyLeague, scheduleEventToFixture, scoreboardToFixtures, searchItemToTeam, summaryToFixture, teamDetailToColors, toStatusCode } from './espn-mappers.ts'
 import { scheduleEventSchema, scoreboardSchema, searchSchema, summarySchema } from './espn-schemas.ts'
 
 describe('toStatusCode', () => {
@@ -145,6 +145,16 @@ describe('summaryToFixture', () => {
 
     expect(fixture?.goals).toEqual({ home: null, away: null })
     expect(fixture?.fixture.status.short).toBe('NS')
+  })
+})
+
+describe('teamDetailToColors', () => {
+  it('should_use_the_primary_color_as_alternate_when_espn_has_no_alternate', () => {
+    expect(teamDetailToColors({ team: { color: '288A00' } })).toEqual({ primary: '#288A00', alternate: '#288A00' })
+  })
+
+  it('should_return_null_when_espn_has_no_primary_color', () => {
+    expect(teamDetailToColors({ team: { alternateColor: 'FCE38A' } })).toBeNull()
   })
 })
 

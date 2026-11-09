@@ -6,6 +6,7 @@ import {
   type AnalysisWarning,
   type Fixture,
   type MatchSummary,
+  type TeamColors,
   type TeamAnalysis,
 } from '@futbol/core'
 import { HttpError } from './errors.ts'
@@ -87,7 +88,10 @@ export class AnalysisService {
     const headToHead = toTeamAnalysis(homeTeamId, withDetail(recent.headToHead, detailed))
     const prediction = predictFromAggregates(home.aggregate, away.aggregate, headToHead.aggregate)
 
-    return { home, away, headToHead, prediction, warnings: this.collectWarnings(home, away, headToHead, prediction !== null) }
+    const [homeColors, awayColors] = await Promise.all([this.loadColors(homeTeamId), this.loadColors(awayTeamId)])
+    const colors = { home: homeColors, away: awayColors }
+
+    return { home, away, colors, headToHead, prediction, warnings: this.collectWarnings(home, away, headToHead, prediction !== null) }
   }
 
   /** The current season plus up to `seasonsBack` previous ones, as a flat list of fixtures. */
@@ -105,6 +109,17 @@ export class AnalysisService {
       if (!(error instanceof HttpError)) throw error
       logger.warn(`[analysis] no ${season} calendar for team ${teamId}: ${error.message}`)
       return []
+    }
+  }
+
+  // Colors only decorate the result, so a team ESPN cannot describe must not break the analysis.
+  private async loadColors(teamId: number): Promise<TeamColors | null> {
+    try {
+      return await this.football.getTeamColors(teamId)
+    } catch (error) {
+      if (!(error instanceof HttpError)) throw error
+      logger.warn(`[analysis] no colors for team ${teamId}: ${error.message}`)
+      return null
     }
   }
 

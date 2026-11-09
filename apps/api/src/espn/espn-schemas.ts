@@ -85,7 +85,11 @@ export const scoreboardSchema = z.object({
     .default([]),
 })
 
-export const searchSchema = z.object({
+export const teamDetailSchema = z.object({
+  team: z.object({ color: z.string().optional(), alternateColor: z.string().optional() }),
+})
+
+export const searchSchema =z.object({
   items: z
     .array(
       z.object({
@@ -103,4 +107,5 @@ export const searchSchema = z.object({
 export type ScheduleEvent = z.infer<typeof scheduleEventSchema>
 export type Scoreboard = z.infer<typeof scoreboardSchema>
 export type Summary = z.infer<typeof summarySchema>
+export type TeamDetail = z.infer<typeof teamDetailSchema>
 export type SearchItem = z.infer<typeof searchSchema>['items'][number]

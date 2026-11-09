@@ -1,5 +1,5 @@
-import { StatisticType, type Fixture, type Team, type TeamStatistics } from '@futbol/core'
-import type { ScheduleEvent, Scoreboard, SearchItem, Summary } from './espn-schemas.ts'
+import { StatisticType, type Fixture, type Team, type TeamColors, type TeamStatistics } from '@futbol/core'
+import type { ScheduleEvent, Scoreboard, SearchItem, Summary, TeamDetail } from './espn-schemas.ts'
 
 // Pre-season and exhibition games: noisy form data that rarely has box score statistics.
 const FRIENDLY_LEAGUE_PREFIXES = ['club.friendly', 'friendly.']
@@ -120,6 +120,13 @@ export function searchItemToTeam(item: SearchItem): Team | undefined {
     team: { id: Number(item.id), name: item.displayName, logo: toLogo(item) },
     league: { id: item.league },
   }
+}
+
+/** ESPN sends hex colors without the leading `#`. Without a primary color there is nothing to paint with. */
+export function teamDetailToColors(detail: TeamDetail): TeamColors | null {
+  const { color, alternateColor } = detail.team
+  if (!color) return null
+  return { primary: `#${color}`, alternate: `#${alternateColor ?? color}` }
 }
 
 /** The matches of one competition on a scoreboard. Matches not started yet carry a placeholder score, so it is ignored. */
