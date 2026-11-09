@@ -35,9 +35,18 @@ export interface AnalysisWarning {
   teamId?: number
 }
 
+/** Brand colors of a team as CSS hex values (`#rrggbb`). */
+export interface TeamColors {
+  primary: string
+  /** Second color of the kit, for when the primary one clashes with the rival's. */
+  alternate: string
+}
+
 export interface AnalysisResponse {
   home: TeamAnalysis
   away: TeamAnalysis
+  /** `null` when the provider has no colors for the team. */
+  colors: { home: TeamColors | null; away: TeamColors | null }
   /** Head-to-head matches from the home team's point of view. */
   headToHead: TeamAnalysis
   prediction: MatchPrediction | null
