@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchAnalysis, fetchMatchday, fetchTeamFixtures, fetchTeamForm, fetchTeams, type AnalysisParams } from '@/lib/api'
+import { fetchAnalysis, fetchMatchday, fetchTeamFixtures, fetchTeamForm, fetchTeams, fetchTeamStanding, type AnalysisParams } from '@/lib/api'
 
 export const MIN_SEARCH_LENGTH = 3
 
@@ -35,6 +35,13 @@ export function useTeamForm(teamId: number) {
   return useQuery({
     queryKey: ['team-form', teamId],
     queryFn: ({ signal }) => fetchTeamForm(teamId, signal),
+  })
+}
+
+export function useTeamStanding(teamId: number, leagueId: string) {
+  return useQuery({
+    queryKey: ['team-standing', teamId, leagueId],
+    queryFn: ({ signal }) => fetchTeamStanding(teamId, leagueId, signal),
   })
 }
 

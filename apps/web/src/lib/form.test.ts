@@ -1,7 +1,7 @@
 import type { MatchSummary, TeamAnalysis, TeamMatchStats } from '@futbol/core'
 import { aggregate } from '@futbol/core'
 import { describe, expect, it } from 'vitest'
-import { buildFormSquares } from './form'
+import { buildFormSquares, findBestAndWorst } from './form'
 
 const TEAM_ID = 10
 
@@ -38,6 +38,35 @@ function summary(fixtureId: number, matchStats: TeamMatchStats, isHome = true): 
 function analysisOf(matches: MatchSummary[]): TeamAnalysis {
   return { teamId: TEAM_ID, matches, aggregate: aggregate(matches.map((match) => match.stats)) }
 }
+
+describe('findBestAndWorst', () => {
+  it('should_pick_the_biggest_win_and_the_biggest_defeat_when_the_form_has_both', () => {
+    const analysis = analysisOf([summary(3, stats(1, 0)), summary(2, stats(4, 0)), summary(1, stats(0, 3), false)])
+
+    const result = findBestAndWorst(analysis)
+
+    expect(result?.best).toMatchObject({ fixtureId: 2, result: 'W', score: '4 - 0', venue: 'vs' })
+    expect(result?.worst).toMatchObject({ fixtureId: 1, result: 'L', score: '0 - 3', venue: 'en', opponent: 'Rival FC' })
+  })
+
+  it('should_break_ties_by_goals_scored_when_two_wins_have_the_same_goal_difference', () => {
+    const analysis = analysisOf([summary(2, stats(1, 0)), summary(1, stats(3, 2)), summary(3, stats(0, 1))])
+
+    expect(findBestAndWorst(analysis)?.best.fixtureId).toBe(1)
+  })
+
+  it('should_leave_the_worst_empty_when_there_is_a_single_match', () => {
+    const result = findBestAndWorst(analysisOf([summary(1, stats(2, 2))]))
+
+    expect(result?.best.fixtureId).toBe(1)
+    expect(result?.worst).toBeNull()
+  })
+
+  it('should_return_null_when_there_are_no_played_matches', () => {
+    expect(findBestAndWorst(analysisOf([]))).toBeNull()
+    expect(findBestAndWorst(analysisOf([summary(1, stats(null, null))]))).toBeNull()
+  })
+})
 
 describe('buildFormSquares', () => {
   it('should_put_the_latest_match_last_when_the_analysis_lists_the_most_recent_first', () => {

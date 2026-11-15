@@ -13,13 +13,12 @@ const SKELETON_ROWS = 3
 
 interface TeamFixturesProps {
   team: Team
-  selectedFixtureId: number | null
   onSelect: (fixture: Fixture) => void
   /** Leaves the team and goes back to the matches of the day. */
   onBack: () => void
 }
 
-export function TeamFixtures({ team, selectedFixtureId, onSelect, onBack }: TeamFixturesProps) {
+export function TeamFixtures({ team, onSelect, onBack }: TeamFixturesProps) {
   const { data, isPending, isError, error } = useTeamFixtures(team.team.id)
 
   return (
@@ -56,7 +55,6 @@ export function TeamFixtures({ team, selectedFixtureId, onSelect, onBack }: Team
               <FixtureList
                 fixtures={data.upcoming}
                 emptyMessage="No hay partidos pendientes en esta temporada."
-                selectedFixtureId={selectedFixtureId}
                 onSelect={onSelect}
               />
             </TabsContent>
@@ -64,7 +62,6 @@ export function TeamFixtures({ team, selectedFixtureId, onSelect, onBack }: Team
               <FixtureList
                 fixtures={data.played}
                 emptyMessage="Todavía no se jugó ningún partido esta temporada."
-                selectedFixtureId={selectedFixtureId}
                 onSelect={onSelect}
               />
             </TabsContent>
@@ -78,11 +75,10 @@ export function TeamFixtures({ team, selectedFixtureId, onSelect, onBack }: Team
 interface FixtureListProps {
   fixtures: Fixture[]
   emptyMessage: string
-  selectedFixtureId: number | null
   onSelect: (fixture: Fixture) => void
 }
 
-function FixtureList({ fixtures, emptyMessage, selectedFixtureId, onSelect }: FixtureListProps) {
+function FixtureList({ fixtures, emptyMessage, onSelect }: FixtureListProps) {
   if (fixtures.length === 0) {
     return <p className="py-3 text-sm text-muted-foreground">{emptyMessage}</p>
   }
@@ -92,7 +88,7 @@ function FixtureList({ fixtures, emptyMessage, selectedFixtureId, onSelect }: Fi
         <FixtureRow
           key={fixture.fixture.id}
           fixture={fixture}
-          selected={fixture.fixture.id === selectedFixtureId}
+          selected={false}
           onSelect={onSelect}
           detail={
             <>
