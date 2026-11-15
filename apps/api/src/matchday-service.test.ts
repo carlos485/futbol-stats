@@ -6,8 +6,9 @@ import type { TrackedCompetition } from './tracked-competitions.ts'
 
 // 2026-10-25 17:30 in Lima.
 const NOW = new Date('2026-10-25T22:30:00Z')
-const LIGA: TrackedCompetition = { id: 'esp.1', name: 'LaLiga (España)' }
-const COPA: TrackedCompetition = { id: 'uefa.champions', name: 'Champions League' }
+const SPAIN = { kind: 'country', name: 'España', flagUrl: 'https://flags.test/esp.png' } as const
+const LIGA: TrackedCompetition = { id: 'esp.1', name: 'LaLiga', logoId: 15, region: SPAIN }
+const COPA: TrackedCompetition = { id: 'uefa.champions', name: 'Champions League', region: { kind: 'continent', name: 'Europa', continent: 'europe' } }
 
 const at = (id: number, date: string) => buildFixture({ id, date })
 
@@ -20,6 +21,26 @@ function serviceWith(
 }
 
 describe('MatchdayService.matchesOfDay', () => {
+  it('should_expose_the_light_and_dark_logo_of_a_competition_only_when_it_has_one', async () => {
+    const { service } = serviceWith(() => [])
+
+    const result = await service.matchesOfDay(NOW)
+
+    expect(result.competitions[0].logo).toEqual({
+      light: 'https://a.espncdn.com/i/leaguelogos/soccer/500/15.png',
+      dark: 'https://a.espncdn.com/i/leaguelogos/soccer/500-dark/15.png',
+    })
+    expect(result.competitions[1].logo).toBeNull()
+  })
+
+  it('should_expose_the_region_of_each_competition', async () => {
+    const { service } = serviceWith(() => [])
+
+    const result = await service.matchesOfDay(NOW)
+
+    expect(result.competitions.map((competition) => competition.region.name)).toEqual(['España', 'Europa'])
+  })
+
   it('should_request_the_lima_day_and_the_next_one_for_every_competition', async () => {
     const { service, getScoreboard } = serviceWith(() => [])
 
@@ -63,7 +84,7 @@ describe('MatchdayService.matchesOfDay', () => {
 
     const result = await service.matchesOfDay(NOW)
 
-    expect(result.competitions.map((competition) => competition.name)).toEqual(['LaLiga (España)', 'Champions League'])
+    expect(result.competitions.map((competition) => competition.name)).toEqual(['LaLiga', 'Champions League'])
     expect(result.competitions.every((competition) => competition.fixtures.length === 0)).toBe(true)
     expect(result.unavailable).toEqual([])
   })

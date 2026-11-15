@@ -10,6 +10,17 @@ interface LoadedCompetition {
   failed: boolean
 }
 
+const LOGO_BASE_URL = 'https://a.espncdn.com/i/leaguelogos/soccer'
+
+function toLogo(logoId: number | undefined): MatchdayCompetition['logo'] {
+  if (logoId === undefined) return null
+  return { light: `${LOGO_BASE_URL}/500/${logoId}.png`, dark: `${LOGO_BASE_URL}/500-dark/${logoId}.png` }
+}
+
+function toMatchdayCompetition(competition: TrackedCompetition, fixtures: Fixture[]): MatchdayCompetition {
+  return { id: competition.id, name: competition.name, logo: toLogo(competition.logoId), region: competition.region, fixtures }
+}
+
 function byKickoff(first: Fixture, second: Fixture): number {
   return Date.parse(first.fixture.date) - Date.parse(second.fixture.date)
 }
@@ -39,11 +50,11 @@ export class MatchdayService {
       const scoreboards = await Promise.all(espnDates.map((date) => this.football.getScoreboard(competition.id, date)))
       const unique = new Map(scoreboards.flat().map((fixture) => [fixture.fixture.id, fixture]))
       const fixtures = [...unique.values()].filter((fixture) => limaDayOf(fixture.fixture.date) === day).sort(byKickoff)
-      return { competition: { ...competition, fixtures }, failed: false }
+      return { competition: toMatchdayCompetition(competition, fixtures), failed: false }
     } catch (error) {
       if (!(error instanceof HttpError)) throw error
       logger.warn(`[matchday] could not load ${competition.id}: ${error.message}`)
-      return { competition: { ...competition, fixtures: [] }, failed: true }
+      return { competition: toMatchdayCompetition(competition, []), failed: true }
     }
   }
 }
