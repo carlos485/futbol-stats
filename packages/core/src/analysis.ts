@@ -42,6 +42,22 @@ export interface TeamColors {
   alternate: string
 }
 
+/** A team's row in the table of a competition. */
+export interface TeamStanding {
+  competitionName: string
+  /** Name of the group when the competition is split into several tables (e.g. a group stage); null otherwise. */
+  group: string | null
+  rank: number
+  points: number
+  played: number
+  wins: number
+  draws: number
+  losses: number
+  goalsFor: number
+  goalsAgainst: number
+  goalDifference: number
+}
+
 export interface AnalysisResponse {
   home: TeamAnalysis
   away: TeamAnalysis
