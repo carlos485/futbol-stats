@@ -1,7 +1,7 @@
 import { StatisticType } from '@futbol/core'
 import { describe, expect, it } from 'vitest'
 import { espnScheduleEvent, espnScoreboard, espnScoreboardEvent, espnSummary } from '../testing/builders.ts'
-import { isFriendlyLeague, scheduleEventToFixture, scoreboardToFixtures, searchItemToTeam, summaryToFixture, teamDetailToColors, toStatusCode } from './espn-mappers.ts'
+import { isFriendlyLeague, scheduleEventToFixture, scoreboardToFixtures, searchItemToTeam, summaryToFixture, standingsToTeamStanding, teamDetailToColors, toStatusCode } from './espn-mappers.ts'
 import { scheduleEventSchema, scoreboardSchema, searchSchema, summarySchema } from './espn-schemas.ts'
 
 describe('toStatusCode', () => {
@@ -145,6 +145,48 @@ describe('summaryToFixture', () => {
 
     expect(fixture?.goals).toEqual({ home: null, away: null })
     expect(fixture?.fixture.status.short).toBe('NS')
+  })
+})
+
+function standingEntry(teamId: number, rank: number) {
+  const stats = { rank, points: 33, gamesPlayed: 12, wins: 11, ties: 0, losses: 1, pointsFor: 48, pointsAgainst: 13, pointDifferential: 35 }
+  return { team: { id: String(teamId) }, stats: Object.entries(stats).map(([name, value]) => ({ name, value })) }
+}
+
+describe('standingsToTeamStanding', () => {
+  it('should_read_the_row_of_the_team_when_the_competition_has_a_single_table', () => {
+    const standings = { name: 'Spanish LALIGA', children: [{ name: 'LALIGA', standings: { entries: [standingEntry(86, 2), standingEntry(83, 1)] } }] }
+
+    expect(standingsToTeamStanding(standings, 83)).toEqual({
+      competitionName: 'Spanish LALIGA',
+      group: null,
+      rank: 1,
+      points: 33,
+      played: 12,
+      wins: 11,
+      draws: 0,
+      losses: 1,
+      goalsFor: 48,
+      goalsAgainst: 13,
+      goalDifference: 35,
+    })
+  })
+
+  it('should_report_the_group_when_the_competition_is_split_into_several_tables', () => {
+    const standings = {
+      name: 'Copa Libertadores',
+      children: [
+        { name: 'Group A', standings: { entries: [standingEntry(1, 1)] } },
+        { name: 'Group B', standings: { entries: [standingEntry(2, 3)] } },
+      ],
+    }
+
+    expect(standingsToTeamStanding(standings, 2)).toMatchObject({ group: 'Group B', rank: 3 })
+  })
+
+  it('should_return_null_when_the_competition_has_no_table_or_the_team_is_not_in_it', () => {
+    expect(standingsToTeamStanding({ name: 'Copa del Rey', children: [] }, 83)).toBeNull()
+    expect(standingsToTeamStanding({ name: 'LALIGA', children: [{ name: 'LALIGA', standings: { entries: [standingEntry(86, 2)] } }] }, 83)).toBeNull()
   })
 })
 

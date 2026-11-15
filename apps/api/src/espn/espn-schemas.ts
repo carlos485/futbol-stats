@@ -89,7 +89,20 @@ export const teamDetailSchema = z.object({
   team: z.object({ color: z.string().optional(), alternateColor: z.string().optional() }),
 })
 
-export const searchSchema =z.object({
+const standingEntrySchema = z.object({
+  team: z.object({ id: z.string() }),
+  stats: z.array(z.object({ name: z.string(), value: z.number().optional() })),
+})
+
+export const standingsSchema = z.object({
+  name: z.string(),
+  // Competitions without a table (cups) answer with no children at all.
+  children: z
+    .array(z.object({ name: z.string(), standings: z.object({ entries: z.array(standingEntrySchema) }) }))
+    .default([]),
+})
+
+export const searchSchema = z.object({
   items: z
     .array(
       z.object({
@@ -107,5 +120,6 @@ export const searchSchema =z.object({
 export type ScheduleEvent = z.infer<typeof scheduleEventSchema>
 export type Scoreboard = z.infer<typeof scoreboardSchema>
 export type Summary = z.infer<typeof summarySchema>
+export type Standings = z.infer<typeof standingsSchema>
 export type TeamDetail = z.infer<typeof teamDetailSchema>
 export type SearchItem = z.infer<typeof searchSchema>['items'][number]

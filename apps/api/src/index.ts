@@ -14,6 +14,7 @@ const database = createDatabase(config.databasePath)
 
 const football = new EspnFootballData(new EspnClient(), new CacheStore(database), {
   siteApiUrl: config.espnSiteApiUrl,
+  standingsApiUrl: config.espnStandingsApiUrl,
   searchApiUrl: config.espnSearchApiUrl,
 })
 const app = createApp({ football, analysis: new AnalysisService(football), matchday: new MatchdayService(football) })

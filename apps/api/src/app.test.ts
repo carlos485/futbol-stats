@@ -79,6 +79,30 @@ describe('matches of the day route', () => {
   })
 })
 
+describe('team standing route', () => {
+  it('should_look_up_the_standing_of_the_team_in_the_given_league_when_the_request_is_valid', async () => {
+    const getStanding = vi.fn(async () => null)
+    const app = createApp({
+      football: buildFootballStub({ getStanding }),
+      analysis: { analyze: vi.fn(), teamForm: vi.fn() },
+      matchday: { matchesOfDay: vi.fn() },
+    })
+
+    const response = await app.request('/api/teams/83/standing?league=esp.1')
+
+    expect(response.status).toBe(200)
+    expect(getStanding).toHaveBeenCalledExactlyOnceWith(83, 'esp.1')
+  })
+
+  it('should_reject_the_request_with_400_when_the_league_is_missing', async () => {
+    const { app } = createTestApp()
+
+    const response = await app.request('/api/teams/83/standing')
+
+    expect(response.status).toBe(400)
+  })
+})
+
 describe('team form route', () => {
   it('should_ask_for_the_form_as_of_the_current_time_when_the_team_id_is_valid', async () => {
     const { app, teamForm } = createTestApp()

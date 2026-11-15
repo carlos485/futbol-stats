@@ -7,6 +7,7 @@ import { EspnFootballData } from './espn-football-data.ts'
 
 const SITE = 'https://espn.test/site'
 const SEARCH = 'https://espn.test/search'
+const STANDINGS = 'https://espn.test/standings'
 const TEAM_ID = 10
 const MS_PER_MINUTE = 60 * 1000
 const MS_PER_HOUR = 60 * MS_PER_MINUTE
@@ -18,7 +19,7 @@ function createService(respond: Responder) {
   const get = vi.fn(async (url: string, _schema?: unknown) => respond(url))
   const source = { get } as unknown as EspnSource
   const cache = new CacheStore(createTestDatabase(), () => clock.time)
-  const service = new EspnFootballData(source, cache, { siteApiUrl: SITE, searchApiUrl: SEARCH })
+  const service = new EspnFootballData(source, cache, { siteApiUrl: SITE, standingsApiUrl: STANDINGS, searchApiUrl: SEARCH })
   return { service, get, clock }
 }
 
@@ -170,6 +171,29 @@ describe('EspnFootballData.getTeamColors', () => {
     expect(await service.getTeamColors(83)).toBeNull()
 
     expect(get).toHaveBeenCalledOnce()
+  })
+})
+
+describe('EspnFootballData.getStanding', () => {
+  const table = { name: 'Spanish LALIGA', children: [{ name: 'LALIGA', standings: { entries: [{ team: { id: '83' }, stats: [{ name: 'rank', value: 1 }] }] } }] }
+
+  it('should_read_the_table_from_the_standings_api_and_cache_it_when_the_team_is_listed', async () => {
+    const { service, get } = createService(() => table)
+
+    const first = await service.getStanding(83, 'esp.1')
+    await service.getStanding(83, 'esp.1')
+
+    expect(first).toMatchObject({ rank: 1, competitionName: 'Spanish LALIGA' })
+    expect(get).toHaveBeenCalledOnce()
+    expect(get.mock.calls[0][0]).toBe(`${STANDINGS}/esp.1/standings`)
+  })
+
+  it('should_return_null_when_espn_has_no_table_for_the_competition', async () => {
+    const { service } = createService(() => {
+      throw new NotFoundError('no table')
+    })
+
+    expect(await service.getStanding(83, 'esp.copa_del_rey')).toBeNull()
   })
 })
 

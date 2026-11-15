@@ -1,5 +1,5 @@
-import { StatisticType, type Fixture, type Team, type TeamColors, type TeamStatistics } from '@futbol/core'
-import type { ScheduleEvent, Scoreboard, SearchItem, Summary, TeamDetail } from './espn-schemas.ts'
+import { StatisticType, type Fixture, type Team, type TeamColors, type TeamStanding, type TeamStatistics } from '@futbol/core'
+import type { ScheduleEvent, Scoreboard, SearchItem, Standings, Summary, TeamDetail } from './espn-schemas.ts'
 
 // Pre-season and exhibition games: noisy form data that rarely has box score statistics.
 const FRIENDLY_LEAGUE_PREFIXES = ['club.friendly', 'friendly.']
@@ -127,6 +127,30 @@ export function teamDetailToColors(detail: TeamDetail): TeamColors | null {
   const { color, alternateColor } = detail.team
   if (!color) return null
   return { primary: `#${color}`, alternate: `#${alternateColor ?? color}` }
+}
+
+/** The team's row in a competition table. Tables split into groups report the group the team plays in. */
+export function standingsToTeamStanding(standings: Standings, teamId: number): TeamStanding | null {
+  const isSplit = standings.children.length > 1
+  for (const table of standings.children) {
+    const entry = table.standings.entries.find((candidate) => Number(candidate.team.id) === teamId)
+    if (!entry) continue
+    const stat = (name: string): number => entry.stats.find((item) => item.name === name)?.value ?? 0
+    return {
+      competitionName: standings.name,
+      group: isSplit ? table.name : null,
+      rank: stat('rank'),
+      points: stat('points'),
+      played: stat('gamesPlayed'),
+      wins: stat('wins'),
+      draws: stat('ties'),
+      losses: stat('losses'),
+      goalsFor: stat('pointsFor'),
+      goalsAgainst: stat('pointsAgainst'),
+      goalDifference: stat('pointDifferential'),
+    }
+  }
+  return null
 }
 
 /** The matches of one competition on a scoreboard. Matches not started yet carry a placeholder score, so it is ignored. */
