@@ -18,10 +18,22 @@ const dateFormat = new Intl.DateTimeFormat(LOCALE, { timeZone: LIMA_TIME_ZONE, d
 
 const timeFormat = new Intl.DateTimeFormat(LOCALE, { timeZone: LIMA_TIME_ZONE, hour: '2-digit', minute: '2-digit', hour12: false })
 
+const longDateTimeFormat = new Intl.DateTimeFormat(LOCALE, {
+  timeZone: LIMA_TIME_ZONE,
+  dateStyle: 'full',
+  timeStyle: 'short',
+  hour12: false,
+})
+
 const longDayFormat = new Intl.DateTimeFormat(LOCALE, { timeZone: LIMA_TIME_ZONE, dateStyle: 'full' })
 
 export function formatLimaDateTime(isoDate: string): string {
   return dateTimeFormat.format(new Date(isoDate))
+}
+
+/** A long Spanish date with the 24-hour Lima time, e.g. "domingo, 25 de octubre de 2026, 18:00". */
+export function formatLimaLongDateTime(isoDate: string): string {
+  return longDateTimeFormat.format(new Date(isoDate))
 }
 
 export function formatLimaDate(isoDate: string): string {

@@ -3,7 +3,7 @@ import { AnalysisWarnings } from '@/components/analysis/analysis-warnings'
 import { ComparisonSection } from '@/components/analysis/comparison-section'
 import { MatchesTable } from '@/components/analysis/matches-table'
 import { MatchHeader } from '@/components/analysis/match-header'
-import { ProbabilityCard } from '@/components/analysis/probability-card'
+import { ProbabilitySection } from '@/components/analysis/probability-section'
 import { ErrorMessage } from '@/components/error-message'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -26,8 +26,11 @@ export function AnalysisView({ fixture }: AnalysisViewProps) {
 
   return (
     <section className="flex flex-col gap-4" aria-label="Análisis del partido">
-      <MatchHeader fixture={fixture} />
-      {isPending ? <AnalysisSkeleton /> : null}
+      <MatchHeader fixture={fixture}>
+        {isPending ? <Skeleton className="h-28 w-full" /> : null}
+        {data ? <ProbabilitySection prediction={data.prediction} colors={data.colors} homeName={homeName} awayName={awayName} /> : null}
+      </MatchHeader>
+      {isPending ? <Skeleton className="h-64 w-full" /> : null}
       {isError ? <ErrorMessage title="No se pudo cargar el análisis" error={error} /> : null}
       {data ? (
         <>
@@ -35,7 +38,6 @@ export function AnalysisView({ fixture }: AnalysisViewProps) {
             warnings={data.warnings}
             teamNames={{ [fixture.teams.home.id]: homeName, [fixture.teams.away.id]: awayName }}
           />
-          <ProbabilityCard prediction={data.prediction} colors={data.colors} homeName={homeName} awayName={awayName} />
           <Card>
             <CardContent>
               <Tabs defaultValue="home">
@@ -60,14 +62,5 @@ export function AnalysisView({ fixture }: AnalysisViewProps) {
         </>
       ) : null}
     </section>
-  )
-}
-
-function AnalysisSkeleton() {
-  return (
-    <div className="flex flex-col gap-4">
-      <Skeleton className="h-40 w-full" />
-      <Skeleton className="h-64 w-full" />
-    </div>
   )
 }

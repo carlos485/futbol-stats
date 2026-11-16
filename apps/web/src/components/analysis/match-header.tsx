@@ -1,17 +1,24 @@
 import type { Fixture } from '@futbol/core'
+import type { ReactNode } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
-import { formatLimaDateTime, formatScore } from '@/lib/format'
+import { formatLimaLongDateTime, formatScore } from '@/lib/format'
 
 interface MatchHeaderProps {
   fixture: Fixture
+  /** Extra content shown at the bottom of the card, such as the win probabilities. */
+  children?: ReactNode
 }
 
-export function MatchHeader({ fixture }: MatchHeaderProps) {
+export function MatchHeader({ fixture, children }: MatchHeaderProps) {
   const { home, away } = fixture.teams
   const hasResult = fixture.goals.home !== null && fixture.goals.away !== null
   return (
     <Card>
-      <CardContent className="flex flex-col items-center gap-3">
+      <CardContent className="flex flex-col items-center gap-4">
+        <div className="flex w-full flex-col text-xs text-muted-foreground">
+          <span className="first-letter:uppercase">{formatLimaLongDateTime(fixture.fixture.date)} (hora de Lima)</span>
+          <span>{fixture.league.name}</span>
+        </div>
         <div className="flex w-full items-center justify-center gap-4 sm:gap-8">
           <TeamBadge name={home.name} logo={home.logo} />
           <div className="flex flex-col items-center">
@@ -22,9 +29,7 @@ export function MatchHeader({ fixture }: MatchHeaderProps) {
           </div>
           <TeamBadge name={away.name} logo={away.logo} />
         </div>
-        <p className="text-center text-sm text-muted-foreground">
-          {fixture.league.name} · {formatLimaDateTime(fixture.fixture.date)} (hora de Lima)
-        </p>
+        {children}
       </CardContent>
     </Card>
   )

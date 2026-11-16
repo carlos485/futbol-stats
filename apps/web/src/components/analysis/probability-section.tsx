@@ -1,5 +1,4 @@
 import type { AnalysisResponse } from '@futbol/core'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatShare } from '@/lib/format'
 import { pickSideColors } from '@/lib/team-colors'
 
@@ -8,22 +7,22 @@ const DRAW_COLOR = 'var(--chart-3)'
 const PERCENT_FACTOR = 100
 const EXPECTED_GOALS_DECIMALS = 2
 
-interface ProbabilityCardProps {
+interface ProbabilitySectionProps {
   prediction: AnalysisResponse['prediction']
   colors: AnalysisResponse['colors']
   homeName: string
   awayName: string
 }
 
-export function ProbabilityCard({ prediction, colors, homeName, awayName }: ProbabilityCardProps) {
+/** Win probabilities of the match, drawn inside the match header card. */
+export function ProbabilitySection({ prediction, colors, homeName, awayName }: ProbabilitySectionProps) {
   const sideColors = pickSideColors(colors.home, colors.away)
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Probabilidades</CardTitle>
-        <CardDescription>Modelo de Poisson sobre los últimos 5 partidos y el historial directo.</CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
+    <section className="flex w-full flex-col gap-4 border-t pt-4" aria-label="Probabilidades">
+      <div className="flex flex-col gap-0.5">
+        <h3 className="text-sm font-semibold">Probabilidades</h3>
+        <p className="text-xs text-muted-foreground">Modelo de Poisson sobre los últimos 5 partidos y el historial directo.</p>
+      </div>
         {prediction ? (
           <>
             <OutcomeBar
@@ -49,8 +48,7 @@ export function ProbabilityCard({ prediction, colors, homeName, awayName }: Prob
         ) : (
           <p className="text-sm text-muted-foreground">No hay datos suficientes para calcular probabilidades.</p>
         )}
-      </CardContent>
-    </Card>
+    </section>
   )
 }
 
