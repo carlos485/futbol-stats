@@ -1,5 +1,4 @@
 import type { Fixture, MatchdayCompetition } from '@futbol/core'
-import { TrophyIcon } from 'lucide-react'
 import { ErrorMessage } from '@/components/error-message'
 import { FixtureRow } from '@/components/fixture-row'
 import { RegionLabel } from '@/components/matches/region-label'
@@ -64,14 +63,7 @@ function CompetitionTitle({ competition }: { competition: MatchdayCompetition })
   const { logo, name, region } = competition
   return (
     <div className="flex items-center gap-3">
-      {logo ? (
-        <>
-          <img src={logo.light} alt="" className="size-9 shrink-0 object-contain dark:hidden" />
-          <img src={logo.dark} alt="" className="hidden size-9 shrink-0 object-contain dark:block" />
-        </>
-      ) : (
-        <TrophyIcon aria-hidden className="size-9 shrink-0 p-1 text-muted-foreground" />
-      )}
+      <img src={logo} alt="" className="size-9 shrink-0 object-contain" />
       <div className="flex min-w-0 flex-col">
         <h3 className="truncate text-sm leading-5 font-semibold">{name}</h3>
         <RegionLabel region={region} />
