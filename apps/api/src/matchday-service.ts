@@ -3,22 +3,15 @@ import { HttpError } from './errors.ts'
 import type { FootballData } from './football-data.ts'
 import { addDays, limaDayOf, toEspnDate } from './lima-date.ts'
 import { logger } from './logger.ts'
-import { TRACKED_COMPETITIONS, type TrackedCompetition } from './tracked-competitions.ts'
+import { logoUrl, TRACKED_COMPETITIONS, type TrackedCompetition } from './tracked-competitions.ts'
 
 interface LoadedCompetition {
   competition: MatchdayCompetition
   failed: boolean
 }
 
-const LOGO_BASE_URL = 'https://a.espncdn.com/i/leaguelogos/soccer'
-
-function toLogo(logoId: number | undefined): MatchdayCompetition['logo'] {
-  if (logoId === undefined) return null
-  return { light: `${LOGO_BASE_URL}/500/${logoId}.png`, dark: `${LOGO_BASE_URL}/500-dark/${logoId}.png` }
-}
-
 function toMatchdayCompetition(competition: TrackedCompetition, fixtures: Fixture[]): MatchdayCompetition {
-  return { id: competition.id, name: competition.name, logo: toLogo(competition.logoId), region: competition.region, fixtures }
+  return { id: competition.id, name: competition.name, logo: logoUrl(competition), region: competition.region, fixtures }
 }
 
 function byKickoff(first: Fixture, second: Fixture): number {

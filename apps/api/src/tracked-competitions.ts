@@ -1,37 +1,42 @@
 import type { CompetitionRegion } from '@futbol/core'
 
-const FLAG_BASE_URL = 'https://a.espncdn.com/i/teamlogos/countries/500'
+// Images live in apps/web/public/logos and are served by the web app.
+const IMAGES_PATH = '/logos'
 
 export interface TrackedCompetition {
   /** ESPN slug of the competition. */
   id: string
   name: string
-  /** ESPN's numeric id of the competition logo; some competitions (club friendlies) have none. */
-  logoId?: number
+  /** File name of the logo inside the images folder. */
+  logoFile: string
   region: CompetitionRegion
 }
 
-/** `flagCode` is the three-letter code ESPN uses for the country's flag image. */
-function country(name: string, flagCode: string): CompetitionRegion {
-  return { kind: 'country', name, flagUrl: `${FLAG_BASE_URL}/${flagCode}.png` }
+/** `imageFile` is the file name of the flag or map inside the images folder. */
+function region(name: string, imageFile: string): CompetitionRegion {
+  return { name, image: `${IMAGES_PATH}/${imageFile}` }
 }
 
-const SOUTH_AMERICA: CompetitionRegion = { kind: 'continent', name: 'Sudamérica', continent: 'south-america' }
-const EUROPE: CompetitionRegion = { kind: 'continent', name: 'Europa', continent: 'europe' }
-const WORLD: CompetitionRegion = { kind: 'world', name: 'Mundo' }
+export function logoUrl(competition: Pick<TrackedCompetition, 'logoFile'>): string {
+  return `${IMAGES_PATH}/${competition.logoFile}`
+}
+
+const SOUTH_AMERICA = region('Sudamérica', 'south-america.webp')
+const EUROPE = region('Europa', 'europe.webp')
+const WORLD = region('Mundo', 'world.png')
 
 /** The competitions listed in the matches of the day, in display order. */
 export const TRACKED_COMPETITIONS: readonly TrackedCompetition[] = [
-  { id: 'per.1', name: 'Liga 1', logoId: 1813, region: country('Perú', 'per') },
-  { id: 'esp.1', name: 'LaLiga', logoId: 15, region: country('España', 'esp') },
-  { id: 'fra.1', name: 'Ligue 1', logoId: 9, region: country('Francia', 'fra') },
-  { id: 'ger.1', name: 'Bundesliga', logoId: 10, region: country('Alemania', 'ger') },
-  { id: 'eng.1', name: 'Premier League', logoId: 23, region: country('Inglaterra', 'eng') },
-  { id: 'ita.1', name: 'Serie A', logoId: 12, region: country('Italia', 'ita') },
-  { id: 'conmebol.libertadores', name: 'Copa Libertadores', logoId: 58, region: SOUTH_AMERICA },
-  { id: 'conmebol.sudamericana', name: 'Copa Sudamericana', logoId: 1208, region: SOUTH_AMERICA },
-  { id: 'uefa.champions', name: 'Champions League', logoId: 2, region: EUROPE },
-  { id: 'uefa.nations', name: 'UEFA Nations League', logoId: 2395, region: EUROPE },
-  { id: 'fifa.friendly', name: 'Amistosos de selecciones', logoId: 53, region: WORLD },
-  { id: 'club.friendly', name: 'Amistosos de clubes', region: WORLD },
+  { id: 'per.1', name: 'Liga 1', logoFile: 'per.1.png', region: region('Perú', 'per.svg') },
+  { id: 'esp.1', name: 'LaLiga', logoFile: 'esp.1.png', region: region('España', 'esp.webp') },
+  { id: 'fra.1', name: 'Ligue 1', logoFile: 'fra.1.png', region: region('Francia', 'fra.webp') },
+  { id: 'ger.1', name: 'Bundesliga', logoFile: 'ger.1.png', region: region('Alemania', 'ger.webp') },
+  { id: 'eng.1', name: 'Premier League', logoFile: 'eng.1.png', region: region('Inglaterra', 'eng.svg') },
+  { id: 'ita.1', name: 'Serie A', logoFile: 'ita.1.png', region: region('Italia', 'ita.webp') },
+  { id: 'conmebol.libertadores', name: 'Copa Libertadores', logoFile: 'conmebol.libertadores.webp', region: SOUTH_AMERICA },
+  { id: 'conmebol.sudamericana', name: 'Copa Sudamericana', logoFile: 'conmebol.sudamericana.png', region: SOUTH_AMERICA },
+  { id: 'uefa.champions', name: 'Champions League', logoFile: 'uefa.champions.webp', region: EUROPE },
+  { id: 'uefa.nations', name: 'UEFA Nations League', logoFile: 'uefa.nations.png', region: EUROPE },
+  { id: 'fifa.friendly', name: 'Amistosos de selecciones', logoFile: 'fifa.friendly.svg', region: WORLD },
+  { id: 'club.friendly', name: 'Amistosos de clubes', logoFile: 'club.friendly.png', region: WORLD },
 ]
