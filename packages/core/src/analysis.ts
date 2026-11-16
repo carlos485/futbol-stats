@@ -78,18 +78,19 @@ export interface TeamFixturesResponse {
   played: Fixture[]
 }
 
-/** Where a competition belongs: a country (with its flag), a continent (drawn as a map) or the whole world. */
-export type CompetitionRegion =
-  | { kind: 'country'; name: string; flagUrl: string }
-  | { kind: 'continent'; name: string; continent: 'south-america' | 'europe' }
-  | { kind: 'world'; name: string }
+/** Where a competition belongs: a country, a continent or the whole world, with an image of its flag or map. */
+export interface CompetitionRegion {
+  name: string
+  /** URL of the flag or map image. */
+  image: string
+}
 
 export interface MatchdayCompetition {
   /** ESPN slug of the competition (e.g. `esp.1`). */
   id: string
   name: string
-  /** Logo URLs for the light and dark themes; `null` when the competition has none. */
-  logo: { light: string; dark: string } | null
+  /** URL of the competition logo. */
+  logo: string
   region: CompetitionRegion
   /** The competition's matches of the day, earliest first. */
   fixtures: Fixture[]
