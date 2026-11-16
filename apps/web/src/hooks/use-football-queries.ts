@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchAnalysis, fetchMatchday, fetchTeamFixtures, fetchTeamForm, fetchTeams, fetchTeamStanding, type AnalysisParams } from '@/lib/api'
+import { fetchAnalysis, fetchLineups, fetchMatchday, fetchTeamFixtures, fetchTeamForm, fetchTeams, fetchTeamStanding, type AnalysisParams } from '@/lib/api'
 
 export const MIN_SEARCH_LENGTH = 3
 
@@ -42,6 +42,17 @@ export function useTeamStanding(teamId: number, leagueId: string) {
   return useQuery({
     queryKey: ['team-standing', teamId, leagueId],
     queryFn: ({ signal }) => fetchTeamStanding(teamId, leagueId, signal),
+  })
+}
+
+// Lineups are published shortly before kickoff, so an empty answer is checked again soon.
+const LINEUPS_STALE_MS = 2 * 60 * 1000
+
+export function useLineups(leagueId: string, fixtureId: number) {
+  return useQuery({
+    queryKey: ['lineups', leagueId, fixtureId],
+    queryFn: ({ signal }) => fetchLineups(leagueId, fixtureId, signal),
+    staleTime: LINEUPS_STALE_MS,
   })
 }
 

@@ -1,9 +1,20 @@
 import type { TeamColors } from '@futbol/core'
 import { describe, expect, it } from 'vitest'
-import { FALLBACK_AWAY_COLOR, FALLBACK_HOME_COLOR, pickSideColors } from './team-colors'
+import { FALLBACK_AWAY_COLOR, FALLBACK_HOME_COLOR, pickSideColors, readableTextColor } from './team-colors'
 
 const RED: TeamColors = { primary: '#990000', alternate: '#FCE38A' }
 const GREEN: TeamColors = { primary: '#288A00', alternate: '#0A422D' }
+
+describe('readableTextColor', () => {
+  it('should_use_black_text_on_light_backgrounds_and_white_text_on_dark_ones', () => {
+    expect(readableTextColor('#ffff00')).toBe('#000')
+    expect(readableTextColor('#990000')).toBe('#fff')
+  })
+
+  it('should_use_white_text_when_the_background_is_a_theme_variable', () => {
+    expect(readableTextColor('var(--chart-1)')).toBe('#fff')
+  })
+})
 
 describe('pickSideColors', () => {
   it('should_use_the_primary_color_of_each_team_when_they_are_distinguishable', () => {

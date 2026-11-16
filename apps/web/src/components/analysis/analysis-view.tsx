@@ -1,13 +1,10 @@
 import type { Fixture } from '@futbol/core'
 import { AnalysisWarnings } from '@/components/analysis/analysis-warnings'
-import { ComparisonSection } from '@/components/analysis/comparison-section'
-import { MatchesTable } from '@/components/analysis/matches-table'
+import { MatchDetailsCard } from '@/components/analysis/match-details-card'
 import { MatchHeader } from '@/components/analysis/match-header'
 import { ProbabilitySection } from '@/components/analysis/probability-section'
 import { ErrorMessage } from '@/components/error-message'
-import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAnalysis } from '@/hooks/use-football-queries'
 
 interface AnalysisViewProps {
@@ -38,27 +35,7 @@ export function AnalysisView({ fixture }: AnalysisViewProps) {
             warnings={data.warnings}
             teamNames={{ [fixture.teams.home.id]: homeName, [fixture.teams.away.id]: awayName }}
           />
-          <Card>
-            <CardContent>
-              <Tabs defaultValue="home">
-                <TabsList>
-                  <TabsTrigger value="home">Últimos 5 — Local</TabsTrigger>
-                  <TabsTrigger value="away">Últimos 5 — Visitante</TabsTrigger>
-                  <TabsTrigger value="h2h">Cara a cara</TabsTrigger>
-                </TabsList>
-                <TabsContent value="home">
-                  <MatchesTable analysis={data.home} />
-                </TabsContent>
-                <TabsContent value="away">
-                  <MatchesTable analysis={data.away} />
-                </TabsContent>
-                <TabsContent value="h2h">
-                  <MatchesTable analysis={data.headToHead} />
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-          <ComparisonSection home={data.home} away={data.away} homeName={homeName} awayName={awayName} />
+          <MatchDetailsCard fixture={fixture} analysis={data} homeName={homeName} awayName={awayName} />
         </>
       ) : null}
     </section>

@@ -1,4 +1,4 @@
-import type { AnalysisResponse, MatchdayResponse, Team, TeamAnalysis, TeamFixturesResponse, TeamStanding } from '@futbol/core'
+import type { AnalysisResponse, MatchLineups, MatchdayResponse, Team, TeamAnalysis, TeamFixturesResponse, TeamStanding } from '@futbol/core'
 
 export class ApiRequestError extends Error {
   readonly status: number
@@ -54,6 +54,10 @@ export function fetchTeamForm(teamId: number, signal: AbortSignal): Promise<Team
 /** `null` when the competition has no table. */
 export function fetchTeamStanding(teamId: number, leagueId: string, signal: AbortSignal): Promise<TeamStanding | null> {
   return getJson(`/api/teams/${teamId}/standing?league=${encodeURIComponent(leagueId)}`, signal)
+}
+
+export function fetchLineups(leagueId: string, fixtureId: number, signal: AbortSignal): Promise<MatchLineups> {
+  return getJson(`/api/matches/${encodeURIComponent(leagueId)}/${fixtureId}/lineups`, signal)
 }
 
 export function fetchAnalysis(params: AnalysisParams, signal: AbortSignal): Promise<AnalysisResponse> {

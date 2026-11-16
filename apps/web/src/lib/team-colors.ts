@@ -10,6 +10,20 @@ const HEX_RADIX = 16
 const CHANNEL_HEX_LENGTH = 2
 const RGB_CHANNELS = 3
 
+const LIGHT_BACKGROUND_LUMINANCE = 0.6
+const MAX_CHANNEL = 255
+const RED_WEIGHT = 0.299
+const GREEN_WEIGHT = 0.587
+const BLUE_WEIGHT = 0.114
+
+/** Black or white, whichever reads better on top of the given hex color (white for theme variables). */
+export function readableTextColor(background: string): string {
+  if (!background.startsWith('#')) return '#fff'
+  const [red, green, blue] = toRgb(background)
+  const luminance = (RED_WEIGHT * red + GREEN_WEIGHT * green + BLUE_WEIGHT * blue) / MAX_CHANNEL
+  return luminance > LIGHT_BACKGROUND_LUMINANCE ? '#000' : '#fff'
+}
+
 export interface SideColors {
   home: string
   away: string

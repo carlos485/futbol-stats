@@ -1,6 +1,5 @@
 import type { AnalysisResponse } from '@futbol/core'
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { formatAverage } from '@/lib/format'
 import { COMPARISON_METRICS } from '@/lib/metrics'
@@ -31,14 +30,10 @@ export function ComparisonSection({ home, away, homeName, awayName }: Comparison
   }))
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Comparativa de promedios</CardTitle>
-        <CardDescription>
-          Promedio por partido sobre los últimos 5. Entre paréntesis, los partidos con dato (n) de cada métrica.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 pt-2">
+      <p className="text-sm text-muted-foreground">
+        Promedio por partido sobre los últimos 5. Entre paréntesis, los partidos con dato (n) de cada métrica.
+      </p>
         <Table>
           <TableHeader>
             <TableRow>
@@ -83,7 +78,6 @@ export function ComparisonSection({ home, away, homeName, awayName }: Comparison
             </BarChart>
           </ResponsiveContainer>
         </div>
-      </CardContent>
-    </Card>
+    </div>
   )
 }
