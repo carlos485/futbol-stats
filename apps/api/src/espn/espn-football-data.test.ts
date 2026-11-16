@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { CacheStore } from '../cache/cache-store.ts'
 import { NotFoundError } from '../errors.ts'
-import { CURRENT_SEASON, createTestDatabase, espnSchedule, espnScheduleEvent, espnScoreboard, espnScoreboardEvent, espnSummary } from '../testing/builders.ts'
+import { CURRENT_SEASON, createTestDatabase, espnRoster, espnSchedule, espnScheduleEvent, espnScoreboard, espnScoreboardEvent, espnSummary } from '../testing/builders.ts'
 import type { EspnSource } from './espn-client.ts'
 import { EspnFootballData } from './espn-football-data.ts'
 
@@ -194,6 +194,37 @@ describe('EspnFootballData.getStanding', () => {
     })
 
     expect(await service.getStanding(83, 'esp.copa_del_rey')).toBeNull()
+  })
+})
+
+describe('EspnFootballData.getLineups', () => {
+  const published = [espnRoster('home', '4-3-3'), espnRoster('away', '4-4-2')]
+
+  it('should_cache_the_lineups_forever_when_the_match_is_finished', async () => {
+    const { service, get, clock } = createService(() => espnSummary({ rosters: published }))
+
+    const first = await service.getLineups('eng.1', 55)
+    clock.time += 1000 * 24 * MS_PER_HOUR
+    const second = await service.getLineups('eng.1', 55)
+
+    expect(first.home?.formation).toBe('4-3-3')
+    expect(second).toEqual(first)
+    expect(get).toHaveBeenCalledOnce()
+  })
+
+  it('should_check_again_after_two_minutes_when_the_match_has_not_finished', async () => {
+    const { service, get, clock } = createService(() =>
+      espnSummary({ rosters: [], statusName: 'STATUS_SCHEDULED', statusState: 'pre' }),
+    )
+
+    expect(await service.getLineups('eng.1', 55)).toEqual({ home: null, away: null })
+    clock.time += 2 * MS_PER_MINUTE - 1
+    await service.getLineups('eng.1', 55)
+    expect(get).toHaveBeenCalledOnce()
+
+    clock.time += 1
+    await service.getLineups('eng.1', 55)
+    expect(get).toHaveBeenCalledTimes(2)
   })
 })
 

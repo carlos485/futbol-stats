@@ -1,4 +1,4 @@
-import { StatisticType, type Fixture, type Team, type TeamColors, type TeamStanding, type TeamStatistics } from '@futbol/core'
+import { StatisticType, type Fixture, type MatchLineups, type Team, type TeamLineup, type TeamColors, type TeamStanding, type TeamStatistics } from '@futbol/core'
 import type { ScheduleEvent, Scoreboard, SearchItem, Standings, Summary, TeamDetail } from './espn-schemas.ts'
 
 // Pre-season and exhibition games: noisy form data that rarely has box score statistics.
@@ -110,6 +110,24 @@ export function summaryToFixture(summary: Summary, fixtureId: number): Fixture |
     goals: { home: parseScore(home.score), away: parseScore(away.score) },
     statistics: statistics.length > 0 ? statistics : undefined,
   }
+}
+
+function toTeamLineup(summary: Summary, side: 'home' | 'away'): TeamLineup | null {
+  const roster = summary.rosters.find((entry) => entry.homeAway === side)
+  if (!roster?.formation) return null
+  const toPlayer = (player: (typeof roster.roster)[number]) => ({
+    name: player.athlete.displayName,
+    jersey: player.jersey ?? null,
+    position: player.position?.abbreviation ?? '',
+  })
+  const starters = roster.roster.filter((player) => player.starter).map(toPlayer)
+  if (starters.length === 0) return null
+  return { formation: roster.formation, starters, substitutes: roster.roster.filter((player) => !player.starter).map(toPlayer) }
+}
+
+/** Both lineups of a match; a side is `null` until ESPN publishes its formation and starters. */
+export function summaryToLineups(summary: Summary): MatchLineups {
+  return { home: toTeamLineup(summary, 'home'), away: toTeamLineup(summary, 'away') }
 }
 
 /** Keeps real soccer teams with a known league; the friendlies pseudo-leagues are noise. */

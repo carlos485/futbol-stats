@@ -1,4 +1,4 @@
-import { fixtureSchema, teamSchema, type Fixture, type Team, type TeamColors, type TeamStanding } from '@futbol/core'
+import { fixtureSchema, teamSchema, type Fixture, type MatchLineups, type Team, type TeamColors, type TeamStanding } from '@futbol/core'
 import { z } from 'zod'
 import { NEVER_EXPIRES, type CacheStore } from '../cache/cache-store.ts'
 import { NotFoundError } from '../errors.ts'
@@ -12,6 +12,7 @@ import {
   searchItemToTeam,
   standingsToTeamStanding,
   summaryToFixture,
+  summaryToLineups,
   teamDetailToColors,
 } from './espn-mappers.ts'
 import { scheduleSchema, scoreboardSchema, searchSchema, standingsSchema, summarySchema, teamDetailSchema } from './espn-schemas.ts'
@@ -31,8 +32,12 @@ const CacheTtl = {
   teamColors: 30 * MS_PER_DAY,
   // Tables change after every matchday.
   standing: MS_PER_HOUR,
+  // Lineups appear shortly before kickoff, so a missing one is checked again soon; a finished match never changes.
+  pendingLineups: 2 * MS_PER_MINUTE,
 } as const
 
+// ESPN state of a match that has ended.
+const FINISHED_STATE = 'post'
 const SEARCH_RESULTS_LIMIT = 10
 const UPCOMING_QUERY = 'fixture=true'
 // ESPN accepts `all` as the league of a team calendar, which lists every competition the team plays.
@@ -60,6 +65,11 @@ const teamStandingSchema = z
     goalDifference: z.number(),
   })
   .nullable()
+const lineupPlayerSchema = z.object({ name: z.string(), jersey: z.string().nullable(), position: z.string() })
+const teamLineupSchema = z
+  .object({ formation: z.string(), starters: z.array(lineupPlayerSchema), substitutes: z.array(lineupPlayerSchema) })
+  .nullable()
+const lineupsSchema = z.object({ home: teamLineupSchema, away: teamLineupSchema })
 const seasonFixturesSchema = z.object({ season: z.number(), fixtures: z.array(fixtureSchema) })
 
 export class EspnFootballData implements FootballData {
@@ -114,6 +124,21 @@ export class EspnFootballData implements FootballData {
         throw error
       }
     })
+  }
+
+  async getLineups(leagueId: string, fixtureId: number): Promise<MatchLineups> {
+    const key = `espn:lineups:${leagueId}:${fixtureId}`
+    const cached = this.cache.get(key, lineupsSchema)
+    if (cached) {
+      logger.info(`[cache] hit ${key}`)
+      return cached
+    }
+
+    const summary = await this.source.get(`${this.leagueUrl(leagueId)}/summary?event=${fixtureId}`, summarySchema)
+    const lineups = summaryToLineups(summary)
+    const finished = summary.header.competitions[0].status.type.state === FINISHED_STATE
+    this.cache.set(key, lineups, finished ? NEVER_EXPIRES : CacheTtl.pendingLineups)
+    return lineups
   }
 
   /** Finished matches never change, so their summary is cached forever. */

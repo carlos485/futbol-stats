@@ -50,6 +50,7 @@ export function buildFootballStub(overrides: Partial<FootballData> = {}): Footba
     getFixtureDetails: async () => undefined,
     getTeamColors: async () => null,
     getStanding: async () => null,
+    getLineups: async () => ({ home: null, away: null }),
     ...overrides,
   }
 }
@@ -108,6 +109,20 @@ interface EspnSummaryOverrides {
   awayStatistics?: Record<string, string>
   statusName?: string
   statusState?: string
+  rosters?: ReturnType<typeof espnRoster>[]
+}
+
+/** One team entry of ESPN's `rosters`: the formation plus its players. */
+export function espnRoster(homeAway: 'home' | 'away', formation: string | undefined, startersCount = 11, substitutesCount = 2) {
+  const player = (index: number, starter: boolean) => ({
+    starter,
+    jersey: String(index + 1),
+    athlete: { displayName: `Player ${index + 1}` },
+    position: { abbreviation: index === 0 ? 'G' : 'CM' },
+  })
+  const starters = Array.from({ length: startersCount }, (_, index) => player(index, true))
+  const substitutes = Array.from({ length: substitutesCount }, (_, index) => player(startersCount + index, false))
+  return { homeAway, formation, roster: [...starters, ...substitutes] }
 }
 
 /** A match summary shaped like ESPN's `/summary?event=` payload (only the fields the app reads). */
@@ -120,6 +135,7 @@ export function espnSummary({
   awayStatistics = { wonCorners: '3', totalShots: '8', shotsOnTarget: '2', saves: '4', yellowCards: '2', redCards: '0' },
   statusName = 'STATUS_FULL_TIME',
   statusState = 'post',
+  rosters = [],
 }: EspnSummaryOverrides = {}) {
   const toStatistics = (values: Record<string, string>) =>
     Object.entries(values).map(([name, displayValue]) => ({ name, displayValue }))
@@ -138,6 +154,7 @@ export function espnSummary({
         },
       ],
     },
+    rosters,
     boxscore: {
       teams: [
         { team: { id: String(homeId) }, statistics: toStatistics(homeStatistics) },

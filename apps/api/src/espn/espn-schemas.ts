@@ -45,6 +45,19 @@ const summaryCompetitorSchema = z.object({
   team: z.object({ id: z.string(), displayName: z.string(), logos: logosSchema }),
 })
 
+const rosterPlayerSchema = z.object({
+  starter: z.boolean().optional(),
+  jersey: z.string().optional(),
+  athlete: z.object({ displayName: z.string() }),
+  position: z.object({ abbreviation: z.string() }).optional(),
+})
+
+const rosterSchema = z.object({
+  homeAway: homeAwaySchema,
+  formation: z.string().optional(),
+  roster: z.array(rosterPlayerSchema).default([]),
+})
+
 export const summarySchema = z.object({
   header: z.object({
     league: leagueSchema,
@@ -53,6 +66,8 @@ export const summarySchema = z.object({
       .array(z.object({ date: z.string(), status: statusSchema, competitors: z.array(summaryCompetitorSchema) }))
       .min(1),
   }),
+  // Present for every match, but empty until ESPN publishes the lineups.
+  rosters: z.array(rosterSchema).default([]),
   boxscore: z
     .object({
       teams: z.array(

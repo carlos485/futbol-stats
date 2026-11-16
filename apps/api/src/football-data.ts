@@ -1,4 +1,4 @@
-import type { Fixture, Team, TeamColors, TeamStanding } from '@futbol/core'
+import type { Fixture, MatchLineups, Team, TeamColors, TeamStanding } from '@futbol/core'
 
 export interface SeasonFixtures {
   /** Start year of the season, as reported by ESPN. */
@@ -16,6 +16,8 @@ export interface FootballData {
   getScoreboard(competitionId: string, espnDate: string): Promise<Fixture[]>
   /** The match with its box score statistics, or `undefined` when ESPN has no summary for it. */
   getFixtureDetails(leagueId: string, fixtureId: number): Promise<Fixture | undefined>
+  /** The lineups of a match; each side is `null` while ESPN has not published it. */
+  getLineups(leagueId: string, fixtureId: number): Promise<MatchLineups>
   /** The team's brand colors, or `null` when the provider has none. */
   getTeamColors(teamId: number): Promise<TeamColors | null>
   /** The team's row in the table of a competition, or null when the competition has no table or the team is not in it. */

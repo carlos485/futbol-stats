@@ -1,7 +1,7 @@
 import { StatisticType } from '@futbol/core'
 import { describe, expect, it } from 'vitest'
-import { espnScheduleEvent, espnScoreboard, espnScoreboardEvent, espnSummary } from '../testing/builders.ts'
-import { isFriendlyLeague, scheduleEventToFixture, scoreboardToFixtures, searchItemToTeam, summaryToFixture, standingsToTeamStanding, teamDetailToColors, toStatusCode } from './espn-mappers.ts'
+import { espnRoster, espnScheduleEvent, espnScoreboard, espnScoreboardEvent, espnSummary } from '../testing/builders.ts'
+import { isFriendlyLeague, scheduleEventToFixture, scoreboardToFixtures, searchItemToTeam, summaryToFixture, standingsToTeamStanding, summaryToLineups, teamDetailToColors, toStatusCode } from './espn-mappers.ts'
 import { scheduleEventSchema, scoreboardSchema, searchSchema, summarySchema } from './espn-schemas.ts'
 
 describe('toStatusCode', () => {
@@ -152,6 +152,30 @@ function standingEntry(teamId: number, rank: number) {
   const stats = { rank, points: 33, gamesPlayed: 12, wins: 11, ties: 0, losses: 1, pointsFor: 48, pointsAgainst: 13, pointDifferential: 35 }
   return { team: { id: String(teamId) }, stats: Object.entries(stats).map(([name, value]) => ({ name, value })) }
 }
+
+describe('summaryToLineups', () => {
+  it('should_split_starters_and_substitutes_when_the_formation_is_published', () => {
+    const summary = summarySchema.parse(espnSummary({ rosters: [espnRoster('home', '4-3-3', 11, 3), espnRoster('away', '4-2-3-1')] }))
+
+    const { home, away } = summaryToLineups(summary)
+
+    expect(home?.formation).toBe('4-3-3')
+    expect(home?.starters).toHaveLength(11)
+    expect(home?.substitutes).toHaveLength(3)
+    expect(home?.starters[0]).toEqual({ name: 'Player 1', jersey: '1', position: 'G' })
+    expect(away?.formation).toBe('4-2-3-1')
+  })
+
+  it('should_leave_a_side_empty_when_espn_has_no_formation_or_starters_for_it', () => {
+    const summary = summarySchema.parse(espnSummary({ rosters: [espnRoster('home', undefined), espnRoster('away', '4-4-2', 0)] }))
+
+    expect(summaryToLineups(summary)).toEqual({ home: null, away: null })
+  })
+
+  it('should_return_empty_lineups_when_the_summary_has_no_rosters', () => {
+    expect(summaryToLineups(summarySchema.parse(espnSummary()))).toEqual({ home: null, away: null })
+  })
+})
 
 describe('standingsToTeamStanding', () => {
   it('should_read_the_row_of_the_team_when_the_competition_has_a_single_table', () => {

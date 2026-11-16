@@ -79,6 +79,30 @@ describe('matches of the day route', () => {
   })
 })
 
+describe('lineups route', () => {
+  it('should_look_up_the_lineups_of_the_match_in_its_competition_when_the_request_is_valid', async () => {
+    const getLineups = vi.fn(async () => ({ home: null, away: null }))
+    const app = createApp({
+      football: buildFootballStub({ getLineups }),
+      analysis: { analyze: vi.fn(), teamForm: vi.fn() },
+      matchday: { matchesOfDay: vi.fn() },
+    })
+
+    const response = await app.request('/api/matches/esp.1/401882814/lineups')
+
+    expect(response.status).toBe(200)
+    expect(getLineups).toHaveBeenCalledExactlyOnceWith('esp.1', 401882814)
+  })
+
+  it('should_reject_the_request_with_400_when_the_fixture_id_is_not_a_number', async () => {
+    const { app } = createTestApp()
+
+    const response = await app.request('/api/matches/esp.1/abc/lineups')
+
+    expect(response.status).toBe(400)
+  })
+})
+
 describe('team standing route', () => {
   it('should_look_up_the_standing_of_the_team_in_the_given_league_when_the_request_is_valid', async () => {
     const getStanding = vi.fn(async () => null)

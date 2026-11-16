@@ -13,6 +13,7 @@ const MIN_SEARCH_LENGTH = 3
 const idSchema = z.coerce.number().int().positive()
 const searchQuerySchema = z.object({ q: z.string().trim().min(MIN_SEARCH_LENGTH) })
 const standingQuerySchema = z.object({ league: z.string().trim().min(1) })
+const lineupsParamsSchema = z.object({ league: z.string().trim().min(1), fixtureId: idSchema })
 const analysisQuerySchema = z.object({
   home: idSchema,
   away: idSchema,
@@ -73,6 +74,11 @@ export function createApp({ football, analysis, matchday, now = () => new Date()
     const teamId = parseOrThrow(idSchema, context.req.param('id'))
     const { league } = parseOrThrow(standingQuerySchema, context.req.query())
     return context.json(await football.getStanding(teamId, league))
+  })
+
+  app.get('/api/matches/:league/:fixtureId/lineups', async (context) => {
+    const { league, fixtureId } = parseOrThrow(lineupsParamsSchema, context.req.param())
+    return context.json(await football.getLineups(league, fixtureId))
   })
 
   app.get('/api/analysis', async (context) => {
