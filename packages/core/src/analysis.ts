@@ -69,6 +69,26 @@ export interface AnalysisResponse {
   warnings: AnalysisWarning[]
 }
 
+export interface LineupPlayer {
+  name: string
+  jersey: string | null
+  /** ESPN position abbreviation (e.g. 'G', 'CD-L', 'AM'). */
+  position: string
+}
+
+export interface TeamLineup {
+  /** The shape of the team, e.g. '4-2-3-1'. */
+  formation: string
+  starters: LineupPlayer[]
+  substitutes: LineupPlayer[]
+}
+
+export interface MatchLineups {
+  /** `null` while the lineup has not been published. */
+  home: TeamLineup | null
+  away: TeamLineup | null
+}
+
 export interface TeamFixturesResponse {
   /** Start year of the current season of the team's league, as reported by ESPN. */
   season: number
